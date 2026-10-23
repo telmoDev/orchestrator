@@ -11,6 +11,8 @@ into the new version's section.
 
 ## Unreleased
 
+## v0.4.0 — 2026-10-23
+
 - Update notice: a SessionStart hook, `.orchestrator/hooks/update-check.sh`, says when a newer orchestrator
   release is out (looked up in the background, at most once a day, so the session never waits on the
   network) and when the workspace's `TEMPLATE_VERSION` is behind the installed skill. The session tells the
