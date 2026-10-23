@@ -47,11 +47,17 @@ SECRET = re.compile(
 )
 GENERATED = re.compile(r"<!-- state:begin.*?<!-- state:end -->", re.S)
 FENCE = re.compile(r"^```.*?^```", re.S | re.M)
+INLINE = re.compile(r"`[^`\n]*`")
 
 
 def prose(body):
     """The file without its code blocks (entry-shape examples), line numbers kept."""
     return FENCE.sub(lambda m: "\n" * m.group(0).count("\n"), body)
+
+
+def literals_out(line):
+    """The line without its inline code spans (formats and examples such as `api #12 open`)."""
+    return INLINE.sub(" ", line)
 REPO_WORD = re.compile(r"(?<![\w-])(" + "|".join(re.escape(LABEL[r]) for r in REPOS) + r")(?![\w-])")
 
 errors, warnings = [], []
@@ -104,8 +110,10 @@ for f, body in text.items():
             seen[s] = n
 
 # 2. Every PR reference exists in a repo named on its line (in any checked repo if none is named).
+# Code blocks and inline code are examples and formats, not references.
 for f, body in text.items():
-    for n, line in enumerate(GENERATED.sub("", body).splitlines(), 1):
+    for n, line in enumerate(prose(GENERATED.sub("", body)).splitlines(), 1):
+        line = literals_out(line)
         named = [r for r in sorted(set(REPO_WORD.findall(line))) if r in gh]
         where = named or list(gh)
         if not where:
@@ -114,7 +122,7 @@ for f, body in text.items():
             if not any(int(num_s) in gh[r] for r in where):
                 errors.append(f"{f}:{n}: #{num_s} is not a PR in {' or '.join(where)}")
 
-# 3. In flight agrees with GitHub (each `<repo> #N <state>`), and covers every open PR.
+# 3. In flight agrees with GitHub (each `<repo> #N <state>` exists and has that state), and covers every open PR.
 state = text.get("PROJECT_STATE.md", "")
 m = re.search(r"^## In flight\n(.*?)(?=^## |\Z)", GENERATED.sub("", state), re.S | re.M)
 listed = {r: set() for r in gh}
@@ -132,7 +140,9 @@ if m:
             num, word = int(tok.group(2)), tok.group(3)
             listed[current].add(num)
             pr = gh[current].get(num)
-            if pr and word and word != actual(pr):
+            if not pr:  # check 2 skips inline code, and the PRs cell is often written in it
+                errors.append(f"PROJECT_STATE.md In flight: {current} #{num} is not a PR")
+            elif word and word != actual(pr):
                 errors.append(f"PROJECT_STATE.md In flight: {current} #{num} says '{word}', GitHub says '{actual(pr)}'")
 else:
     errors.append("PROJECT_STATE.md: no '## In flight' section")

@@ -13,8 +13,11 @@ into the new version's section.
 
 - `scripts/migrate.sh <workspace>` does the mechanical part of the v0.1.0 migration (moves, path
   rewrites, thin `CLAUDE.md`, new files, `.codex/`) and lists what an agent still edits by hand.
+- `memory-check.py` no longer reads code blocks or inline code as PR references: the example
+  `api #12 open, web #7 draft` in `PROJECT_STATE.md` failed the check in any repo with a remote.
+  The In flight table now checks itself that each PR it lists exists, backticks or not.
 
-**Workspaces:** nothing.
+**Workspaces:** copy `templates/orchestrator/scripts/memory-check.py` over `.orchestrator/scripts/memory-check.py`.
 
 ## v0.1.0 — 2026-10-23
 
