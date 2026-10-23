@@ -54,7 +54,8 @@ or `py -3`. It creates no symlinks.
   shows no convention, propose the orchestrator's default (Conventional Commits, titles of at most 72
   characters, branches `<type>/<topic>`), write it in its section under *Repo guides*, and set
   `TITLE_PATTERN`/`TITLE_MAX` if the user wants it enforced.
-- Ask whether to version the orchestration layer in git. **Default: yes.** If not, pass `--no-git`.
+- Ask whether to version the orchestration layer in git. **No default: always ask**, it is the user's call.
+  Pass `--git` or `--no-git` accordingly; the scaffold refuses to run without one of them.
 - Ask whether the user opts into the `pre-pr-review` for large tasks (2–3 `architect` reviewers plus one
   verifier per finding; a saved workflow in Claude Code, a skill in Codex). **Default: yes.** Claude
   Code's Workflow tool needs that opt-in in the user's words, and `AGENTS.md` records it with the date.
@@ -72,7 +73,7 @@ or `py -3`. It creates no symlinks.
 ## 2. Run the scaffold
 
 ```bash
-bash <this skill's directory>/scripts/scaffold.sh [--no-git] [--tools claude,codex] <workspace-root> [repo ...]
+bash <this skill's directory>/scripts/scaffold.sh --git|--no-git [--tools claude,codex] <workspace-root> [repo ...]
 ```
 
 With no repo arguments it uses the detected ones. It creates:
@@ -97,7 +98,7 @@ With no repo arguments it uses the detected ones. It creates:
 | `.codex/hooks.json` | Codex | SessionStart: the memory and the decision index |
 | `.gitignore` | both | Ignores the app repos, so the root versions only the orchestration layer |
 
-It runs `git init` at the root when the root isn't a repo yet and has subrepos. It doesn't commit.
+With `--git` it runs `git init` at the root when the root isn't a repo yet and has subrepos. It doesn't commit.
 
 With `--no-git` it runs no `git init` and writes no root `.gitignore`. `AGENTS.md` says the layer is
 unversioned, and `orchestrator.conf` gets `ROOT_GIT="no"`, so `sync-memory` skips its commit. In
