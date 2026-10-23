@@ -1,0 +1,8 @@
+# The application repos are versioned on their own (scaffold appends one line per repo).
+
+# Local-only files
+.DS_Store
+.claude/settings.local.json
+.claude/tmp/
+.env
+.env.*
