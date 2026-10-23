@@ -40,10 +40,18 @@ on Windows), verifies it with `bash install.sh --check`, and explains how to wor
 By hand:
 
 ```bash
-git clone https://github.com/telmoDev/orchestrator.git ~/orchestrator-setup
+git clone --branch v0.1.0 https://github.com/telmoDev/orchestrator.git ~/orchestrator-setup   # or the latest release
 cd ~/orchestrator-setup
 bash install.sh                 # both tools; or --tools claude / --tools codex
 bash install.sh --check
 ```
 
-Update with `git -C ~/orchestrator-setup pull --ff-only`; remove with `bash install.sh --uninstall`.
+Update by checking out a newer tag (`git fetch --tags && git checkout vX.Y.Z`; read `CHANGELOG.md` first);
+remove with `bash install.sh --uninstall`.
+
+## Versions
+
+Releases follow semver and are listed in [CHANGELOG.md](CHANGELOG.md), each with what an existing
+workspace needs to catch up. A workspace records its version in `.orchestrator/orchestrator.conf` ›
+`TEMPLATE_VERSION`. Maintainers cut a release with `bash release.sh <version>` from a clean `main`
+(notes come from *Unreleased*).

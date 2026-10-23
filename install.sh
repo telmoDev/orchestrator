@@ -26,6 +26,7 @@ is_link() { # a symlink, or on Windows a junction
 
 if [ $check = yes ]; then
   status=0
+  echo "version $(cat "$src/VERSION" 2>/dev/null || echo unreleased) ($(git -C "$src" describe --tags --always 2>/dev/null || echo "not a git checkout"))"
   for t in ${tools//,/ }; do
     case "$t" in claude) dst="$HOME/.claude/skills/orchestrator-setup" ;; codex) dst="$HOME/.agents/skills/orchestrator-setup" ;; *) echo "install: unknown tool $t" >&2; exit 2 ;; esac
     if is_link "$dst" && [ -f "$dst/SKILL.md" ] && [ "$(cd "$dst" && pwd -P)" = "$(cd "$src" && pwd -P)" ]; then echo "ok      $t: $dst"; else echo "missing $t: $dst"; status=1; fi

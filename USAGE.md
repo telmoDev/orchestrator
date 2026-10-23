@@ -51,5 +51,6 @@ more things, then writes the files and lists what's left for you to fill in.
   `bash .orchestrator/scripts/push-pr.sh` after the gate, and never merges.
 - When a reviewer comments something the checklist would have caught, the orchestrator adds a line to the
   checklist so it doesn't happen again.
-- Update the skill: `git -C ~/orchestrator-setup pull --ff-only`. Existing workspaces keep their files;
-  ask the agent to bring a workspace up to date with the new templates when you want it.
+- Update the skill: ask your agent to update the orchestrator (it moves to the latest release and tells
+  you what changed). Existing workspaces keep their files and their `TEMPLATE_VERSION`; ask the agent to
+  bring a workspace up to date when you want it, and it follows the *Workspaces* notes in `CHANGELOG.md`.

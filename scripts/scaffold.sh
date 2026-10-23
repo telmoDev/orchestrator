@@ -28,6 +28,7 @@ root="$(cd "${1:?usage: scaffold.sh [--no-git] [--tools claude,codex] <workspace
 # The path written into the guides: on Windows (Git Bash) the native C:/... form, which every tool understands.
 root_shown=$(cd "$root" && { pwd -W 2>/dev/null || pwd; })
 codex_trivial="${CODEX_TRIVIAL:-gpt-6-luna}" codex_normal="${CODEX_NORMAL:-gpt-6.1-sol}" codex_hard="${CODEX_HARD:-gpt-6-astra}"
+version=$(cat "$here/VERSION" 2>/dev/null || echo unreleased)
 py=""; for c in python3 python "py -3"; do $c -c 'import sys; sys.exit(sys.version_info < (3, 8))' >/dev/null 2>&1 && { py=$c; break; }; done
 [ -n "$py" ] || { echo "scaffold: Python 3.8+ not found (python3, python or py -3)" >&2; exit 2; }
 
@@ -105,8 +106,8 @@ render() { # render <template> <dest> [repo]
   [ -n "$repo" ] && { guide="$(guide_of "$repo")"; agent="$(agent_of "$repo")"; base="$(base_for "$repo")"; }
   ROOT="$root_shown" NAME="$name" REPOS="$repo_list" REPO="$repo" REPO_GUIDE="$guide" AGENT="$agent" BASE="$base" BASES="$bases" \
   REPO_ROWS="$repo_rows" DEV_ROWS="$dev_rows" REPO_SECTIONS="$repo_sections" DATE="$(date +%F)" \
-  ROOT_GIT="$root_git" ROOT_VCS="$root_vcs" CODEX_TRIVIAL="$codex_trivial" CODEX_NORMAL="$codex_normal" CODEX_HARD="$codex_hard" \
-    perl -pe 's/\{\{(ROOT|NAME|REPOS|REPO_GUIDE|REPO_SECTIONS|REPO_ROWS|DEV_ROWS|REPO|AGENT|BASES|BASE|DATE|ROOT_GIT|ROOT_VCS|CODEX_TRIVIAL|CODEX_NORMAL|CODEX_HARD)\}\}/$ENV{$1}/g' "$src" >"$dest"
+  ROOT_GIT="$root_git" ROOT_VCS="$root_vcs" CODEX_TRIVIAL="$codex_trivial" CODEX_NORMAL="$codex_normal" CODEX_HARD="$codex_hard" VERSION="$version" \
+    perl -pe 's/\{\{(ROOT|NAME|REPOS|REPO_GUIDE|REPO_SECTIONS|REPO_ROWS|DEV_ROWS|REPO|AGENT|BASES|BASE|DATE|ROOT_GIT|ROOT_VCS|CODEX_TRIVIAL|CODEX_NORMAL|CODEX_HARD|VERSION)\}\}/$ENV{$1}/g' "$src" >"$dest"
   case "$dest" in *.sh|*.py) chmod +x "$dest" ;; esac
   created+=("${dest#$root/}")
 }
@@ -176,6 +177,7 @@ elif [ "$repo_list" != "." ] && [ -f "$root/.gitignore" ]; then
   [ -d "$root/.git" ] || { git -C "$root" init -q && echo "git init at $root"; }
 fi
 
+echo "orchestrator-setup $version"
 echo "tools: $tools"
 echo "repos: $repo_list"
 echo "base branches: $bases"

@@ -34,16 +34,20 @@ push script can use a wrapper for the right account (`GIT_WRAPPER`, set up later
 
 ## 3. Get the code
 
-Clone to `~/orchestrator-setup` (on Windows, `%USERPROFILE%\orchestrator-setup`) unless the person names
-another folder:
+Install the **latest release**, not `main`. Clone to `~/orchestrator-setup` (on Windows,
+`%USERPROFILE%\orchestrator-setup`) unless the person names another folder:
 
 ```bash
-git clone https://github.com/telmoDev/orchestrator.git ~/orchestrator-setup
+url=https://github.com/telmoDev/orchestrator.git
+tag=$(git ls-remote --tags --refs --sort=-v:refname "$url" 'v*' | head -1 | sed 's#.*refs/tags/##')
+git clone --branch "$tag" "$url" ~/orchestrator-setup
 ```
 
 If the folder already exists and is this repository (`git -C ~/orchestrator-setup remote get-url origin`),
-update it instead with `git -C ~/orchestrator-setup pull --ff-only`. If it exists and is something else,
-ask the person for another folder. Keep the clone: both tools read the skill from it.
+update it instead: `git -C ~/orchestrator-setup fetch --tags`, find the latest tag as above, read the
+`CHANGELOG.md` sections between the installed version (`VERSION`) and that tag, tell the person what
+changes, then `git -C ~/orchestrator-setup checkout <tag>`. If the folder is something else, ask the
+person for another folder. Keep the clone: both tools read the skill from it.
 
 ## 4. Install the skill
 
@@ -68,12 +72,13 @@ usually in the current one). Codex: `$orchestrator-setup` or `/skills`; restart 
 Don't set up any workspace yet unless the person asks: that's the skill's job, run inside the workspace.
 Read `USAGE.md` in the clone and tell the person, in at most 15 lines:
 
-- what was installed, where the clone is, and for which tools;
+- what was installed (the version from `VERSION`), where the clone is, and for which tools;
 - how to start: open their agent at the root of the folder that holds their repos and say
   "implementa la estructura de orquestador" (or "set up the orchestrator"); the skill asks a few
   questions and writes the files;
 - the daily routine from `USAGE.md` (*Every session*), with the commands of their tool;
-- how to update (`git -C <clone> pull --ff-only`) and uninstall (`bash install.sh --uninstall`);
+- how to update (ask the agent to update the orchestrator: it moves the clone to the latest release and
+  says what changed) and uninstall (`bash install.sh --uninstall`);
 - anything that is still missing (a login, a prerequisite) and who has to do it.
 
 Then offer to set up a workspace now.
