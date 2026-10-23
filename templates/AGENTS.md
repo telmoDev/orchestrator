@@ -28,7 +28,7 @@ TODO(orchestrator-setup): how the repos depend on each other, where the contract
 
 ## Standards
 
-The engineering standards this workspace follows. They start as the orchestrator's defaults, which hold for any stack; the user keeps, rewrites, drops or adds to them. Each is a skill in `.agents/skills/` (or a repo's own copy), and the brief of every task its row covers names it.
+The engineering standards this workspace follows. They start as the orchestrator's defaults, which hold for any stack; the user keeps, rewrites, drops or adds to them. Each is a skill in `.agents/skills/` (or a repo's own copy), and the brief of every task its row covers names it. A short digest of them is written into the `architect` and `*-dev` agent definitions, so every agent applies them without opening a file: when a standard changes, update the digest in both, and regenerate the Codex agents.
 
 | Skill | Load it for |
 |---|---|
@@ -108,11 +108,12 @@ This file and the loaded memory are cached, so they cost little per turn. They s
   When unsure between two tiers, pick the lower one. An agent whose checks fail twice on the same point is replaced by a new one, one tier up, briefed with the previous report (continuing an agent keeps its model, so it can't escalate). `explorer` stays on the trivial tier. `architect` plans on the hard tier, and reviews on normal unless the task is hard. Whatever the tier, a brief carries everything the model needs to get it right the first time: the criteria and the contract pasted in, the files to touch, the checks to run. A vague brief costs more in rework than it saves.
 - **Cost per task.** There is no automatic budget enforcement. Each brief's `Task: … · Tier: …` header is the integration point: when an agent's result reports its token usage, the orchestrator notes it with the attempts and the final status in the task's `PROGRESS.md` entry while the task is partial. Never estimate a figure that wasn't reported.
 - **Reports.** Every brief ends with: "Report in at most 10 lines: result, each criterion `passed`/`failed`/`blocked`/`pending` with the test that shows it (and its red output when TDD is on), files touched, checks run and their results, blockers, risks and proposed decisions. Never claim a command you didn't run. No diffs, no logs."
-- **Read narrowly, delegate broadly.** The orchestrator may run a grep or read an excerpt under ~100 lines to check one point. That is cheaper than briefing an agent. Broad lookups go to `explorer`, implementation to the `*-dev` agents, and large plans and reviews to `architect`. The orchestrator never writes application code.
+- **Read narrowly, delegate broadly.** The orchestrator runs on the most expensive model and rereads its whole context every turn, so what it reads costs the most. It may run one grep or read one excerpt under ~100 lines to check one point. That is cheaper than briefing an agent. A second read for the same question means it is a sweep: hand it to `explorer`. Never open a whole file, a full diff or a log to look for something: `git diff --stat`, the agent's report and `explorer` answer that. Broad lookups go to `explorer`, implementation to the `*-dev` agents, and large plans and reviews to `architect`. The orchestrator never writes application code.
 - **Continue, don't respawn.** Follow-ups and review fixes go to the agent that did the work. A new agent pays for all its reading again.
 - **Size the flow.** A small task skips `architect` (steps 2 and 4 above), and its brief names only the standards its task needs. The `pre-pr-review` costs 2–3 reviewers plus one verifier per finding (capped at 8 per group), so it is for large tasks only.
 - **Parallel.** Launch independent agents at once.
-- **Clear the context** between unrelated tasks. The memory is the handoff. Each tool's settings compact well before the full window (*Tool mapping*).
+- **Delegate by context size.** Keep track of how much you have read in this session. Past roughly 100k tokens of context, send every lookup to `explorer`, take only the agents' reports, and once the current task's PR is open run `sync-memory` and clear the context before the next one. Each tool's settings compact at 150k (*Tool mapping*).
+- **Clear the context** between unrelated tasks. The memory is the handoff.
 - **Measure** before adding anything that loads on every session (*Tool mapping*).
 
 ## Workspace rules
@@ -146,6 +147,6 @@ The flow above is the same in both tools. Only these mechanics differ.
 | Root skills | copies in `.claude/skills/` (from `.agents/skills/` by `sync-skills.sh`); invoke `/sync-memory` | read from `.agents/skills/`; invoke `$sync-memory` |
 | Small-task diff review (step 4) | `/code-review medium` on the branch | the orchestrator reviews part B itself, or one `architect` on the normal tier |
 | Large-task review (step 4) | saved workflow `.claude/workflows/pre-pr-review.js` | skill `$pre-pr-review` (same groups and verifier) |
-| Compaction | `.claude/settings.json`: `autoCompactWindow` 200k (dev agents 150k), idle compaction from 120k | `.codex/config.toml`: `model_auto_compact_token_limit` 200k |
+| Compaction | `.claude/settings.json`: `autoCompactWindow` 150k (dev agents 150k), idle compaction from 100k | `.codex/config.toml`: `model_auto_compact_token_limit` 150k |
 | Attribution off (only with `ATTRIBUTION="refuse"`) | `.claude/settings.json` › `attribution` empty | `push-pr.sh` refuses it |
 | Measure | `/usage` (share by skill, subagent, plugin, MCP) | `/status` |

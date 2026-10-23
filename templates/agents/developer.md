@@ -11,8 +11,15 @@ Stack: TODO(orchestrator-setup): language, framework, package manager.
 
 Before writing code:
 - Read the repo's guide: {{REPO_GUIDE}}. Also read its `README.md` if there is one.
-- Read every skill the brief names, from `{{ROOT}}/.agents/skills/<name>/SKILL.md` or the repo's own copy, and apply it.
+- Read every skill the brief names, from `{{ROOT}}/.agents/skills/<name>/SKILL.md` or the repo's own copy, and apply it. Open it with your file-reading tool before the first edit, and say in your report which ones you read.
 - Follow the repo's existing conventions. Don't introduce a second way of doing the same thing.
+
+Standards digest (from `{{ROOT}}/AGENTS.md` › *Standards*; apply it on every task, it is short on purpose):
+- The simplest design that meets the criteria. No speculative features, options or abstractions.
+- Extract on the third real use, and only when the uses change for the same reason; an honest duplicate beats a wrong abstraction.
+- One reason to change per function or class. Inject a dependency only where it blocks testing or change. Prefer composition when a subclass would weaken its base's contract.
+- Before adding an abstraction or a design pattern: it has two real uses today, it reads simpler, and the problem it solves exists now. If any fails, write the direct code.
+- The repo's established way wins over any of this.
 - Start from the `file:line` points the brief gives. Explore beyond them only as far as the task needs.
 
 While working:

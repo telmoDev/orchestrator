@@ -92,12 +92,12 @@ With no repo arguments it uses the detected ones. It creates:
 | `.agents/skills/` | both | `sync-memory`, the default standards `software-principles` and `design-patterns`, and `pre-pr-review` (Codex's version of the workflow). The one copy to edit |
 | `.gitattributes` | both | Keeps scripts LF, so Git for Windows doesn't break them with CRLF |
 | `CLAUDE.md` | Claude | Imports `AGENTS.md` and the two memory files |
-| `.claude/settings.json` | Claude | The SessionStart decision index and update notice, `autoCompactWindow: 200000`, idle compaction from 120k (`env.CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS`), `skillListingMaxDescChars: 300`, `enabledPlugins` |
+| `.claude/settings.json` | Claude | The SessionStart decision index and update notice, `autoCompactWindow: 150000`, idle compaction from 100k (`env.CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS`), `skillListingMaxDescChars: 300`, `enabledPlugins` |
 | `.claude/agents/` | Claude | `explorer` (Haiku), `architect` (Opus), `<repo-slug>-dev` (Sonnet, compacts at 150k): the source the Codex agents are rendered from |
 | `.claude/workflows/pre-pr-review.js` | Claude | Saved workflow: `architect` reviewers per group of checklist items, then a Sonnet `architect` that tries to refute each finding |
 | `.claude/skills/` | Claude | Copies of `.agents/skills/` except `CODEX_ONLY_SKILLS` |
 | `.codex/agents/*.toml` | Codex | The same agents, rendered by `scripts/agent-to-codex.py`: no model (the spawn request picks the tier's), except `explorer` on the trivial model |
-| `.codex/config.toml` | Codex | `model_auto_compact_token_limit = 200000`, `[agents]` default model (normal tier) and medium effort |
+| `.codex/config.toml` | Codex | `model_auto_compact_token_limit = 150000`, `[agents]` default model (normal tier) and medium effort |
 | `.codex/hooks.json` | Codex | SessionStart: the memory, the decision index and the update notice |
 | `.gitignore` | both | Ignores the app repos, so the root versions only the orchestration layer |
 
@@ -116,7 +116,8 @@ Edit the generated files. Replace every `TODO(orchestrator-setup)` marker:
   connect": how they depend on each other, where the contract between them is written, and where cross-repo
   decisions live.
 - **The user's choices** (step 1): in *Standards*, drop or rewrite the rows the user declined and add theirs
-  (delete a declined default skill from `.agents/skills/`); in the checklist's part C, drop, rewrite or add
+  (delete a declined default skill from `.agents/skills/`), and make the *Standards digest* in
+  `.claude/agents/architect.md` and each `*-dev.md` say the same (delete it when no standard is left); in the checklist's part C, drop, rewrite or add
   items, keeping the numbers that stay; `TDD`, `TDD_TEST_COMMIT`, `TDD_CODE_COMMIT`, `TITLE_PATTERN`,
   `TITLE_MAX` and `ATTRIBUTION` in `orchestrator.conf`. With `ATTRIBUTION="refuse"`, also add
   `"attribution": {"commit": "", "pr": ""}` to `.claude/settings.json` and a *Workspace rules* line saying so.

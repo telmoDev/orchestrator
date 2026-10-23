@@ -11,6 +11,20 @@ into the new version's section.
 
 ## Unreleased
 
+- Standards that agents actually apply: transcripts showed dev agents told to "read software-principles"
+  never opened it. The `architect` and `*-dev` definitions now carry a short *Standards digest*; the full
+  skills are opened for plans and design reviews, and agents report which skills they read.
+- A leaner orchestrator, which ran on the priciest model and processed half of all tokens: one read per
+  question (a second one goes to `explorer`), never a whole file, diff or log; past ~100k tokens of context it
+  delegates every lookup and clears after the task's PR. Compaction at 150k (was 200k) in both tools, idle
+  compaction from 100k (was 120k).
+
+**Workspaces:** optional. Add the *Standards digest* block to `.claude/agents/architect.md` and each
+`*-dev.md` (as in `templates/agents/`) and regenerate `.codex/agents/` with `agent-to-codex.py`; copy the
+*Read narrowly* and *Delegate by context size* bullets and the *Compaction* row into `AGENTS.md`; set
+`autoCompactWindow` to 150000 and `CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS` to "100000" in
+`.claude/settings.json`, and `model_auto_compact_token_limit = 150000` in `.codex/config.toml`.
+
 ## v0.4.0 — 2026-10-23
 
 - Update notice: a SessionStart hook, `.orchestrator/hooks/update-check.sh`, says when a newer orchestrator

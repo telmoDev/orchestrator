@@ -1,8 +1,8 @@
 # Codex project config for the orchestrator (loaded only when this project is trusted).
 # The Claude Code equivalents are in .claude/settings.json; AGENTS.md › Tool mapping lists both.
 
-# Compact well before the full window, as Claude Code does at 200k.
-model_auto_compact_token_limit = 200000
+# Compact well before the full window, as Claude Code does at 150k: the orchestrator rereads its context every turn.
+model_auto_compact_token_limit = 150000
 
 [agents]
 # Subagents default to the normal tier at medium effort; a spawn request names another tier's model.
