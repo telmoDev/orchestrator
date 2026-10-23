@@ -47,11 +47,17 @@ SECRET = re.compile(
 )
 GENERATED = re.compile(r"<!-- state:begin.*?<!-- state:end -->", re.S)
 FENCE = re.compile(r"^```.*?^```", re.S | re.M)
+INLINE = re.compile(r"`[^`\n]*`")
 
 
 def prose(body):
     """The file without its code blocks (entry-shape examples), line numbers kept."""
     return FENCE.sub(lambda m: "\n" * m.group(0).count("\n"), body)
+
+
+def literals_out(line):
+    """The line without its inline code spans (formats and examples such as `api #12 open`)."""
+    return INLINE.sub(" ", line)
 REPO_WORD = re.compile(r"(?<![\w-])(" + "|".join(re.escape(LABEL[r]) for r in REPOS) + r")(?![\w-])")
 
 errors, warnings = [], []
@@ -104,8 +110,10 @@ for f, body in text.items():
             seen[s] = n
 
 # 2. Every PR reference exists in a repo named on its line (in any checked repo if none is named).
+# Code blocks and inline code are examples and formats, not references.
 for f, body in text.items():
-    for n, line in enumerate(GENERATED.sub("", body).splitlines(), 1):
+    for n, line in enumerate(prose(GENERATED.sub("", body)).splitlines(), 1):
+        line = literals_out(line)
         named = [r for r in sorted(set(REPO_WORD.findall(line))) if r in gh]
         where = named or list(gh)
         if not where:
