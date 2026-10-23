@@ -11,6 +11,8 @@ into the new version's section.
 
 ## Unreleased
 
+## v0.2.0 — 2026-10-23
+
 - `scripts/migrate.sh <workspace>` does the mechanical part of the v0.1.0 migration (moves, path
   rewrites, thin `CLAUDE.md`, new files, `.codex/`) and lists what an agent still edits by hand.
 - `memory-check.py` no longer reads code blocks or inline code as PR references: the example
