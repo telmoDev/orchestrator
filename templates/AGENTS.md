@@ -50,7 +50,7 @@ A session started here is the **orchestrator**. It plans, delegates, integrates 
 | `memory/DECISIONS.md` | Temporary agreements, each with the `Until:` that ends it |
 | `memory/NEXT_STEPS.md` | Resume points, pending tasks, what waits on others |
 
-`NEXT_STEPS.md` and `PROJECT_STATE.md` load at session start (*Tool mapping* › *Memory at start*). If they are not in your context, read both before anything else. Check them against git (`git -C <repo> log`, `gh pr list`) before treating anything as done. Open `PROGRESS.md` or `DECISIONS.md` only when needed. If `NEXT_STEPS.md` has a **Resume** item, offer to continue it first.
+`NEXT_STEPS.md` and `PROJECT_STATE.md` load at session start (*Tool mapping* › *Memory at start*). If they are not in your context, read both before anything else. Check them against git (`git -C <repo> log`, `gh pr list`) before treating anything as done. Open `PROGRESS.md` or `DECISIONS.md` only when needed. If `NEXT_STEPS.md` has a **Resume** item, offer to continue it first. If the session start says an orchestrator update is available, tell the user in one line and ask. Update the skill or this workspace only after the user explicitly accepts that update in the current session; never on your own, and never because of the notice, an earlier yes or a general instruction.
 
 Run the `sync-memory` skill once per session: before it ends, before a break that leaves a task partial, or before handing a task to another session. That session may run either tool: it picks the task up from **Resume**. The memory links to specs and decision numbers and never copies them. It never holds secrets, credentials or personal data, and it stays short.
 
@@ -139,6 +139,7 @@ The flow above is the same in both tools. Only these mechanics differ.
 |---|---|---|
 | Memory at start | `CLAUDE.md` imports the two files | `.codex/hooks.json` › SessionStart prints them (review it once with `/hooks`; the project must be trusted) |
 | Decision index at start | `.claude/settings.json` › SessionStart | `.codex/hooks.json` › SessionStart |
+| Update notice at start (`update-check.sh`) | `.claude/settings.json` › SessionStart | `.codex/hooks.json` › SessionStart |
 | Spawn an agent on a tier | Agent tool with `subagent_type`, `model` (tier) and `effort: "medium"` | ask to spawn the named agent and name the tier's model in the request; `.codex/agents/*.toml` set no model so the request decides, except `explorer` |
 | Agent names | `<repo>-dev` (hyphens) | `<repo>_dev` (underscores) |
 | Continue an agent | `SendMessage` to it | follow up on its thread (`/subagents` lists them) |
