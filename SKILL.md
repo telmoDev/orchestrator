@@ -28,7 +28,7 @@ or `py -3`. It creates no symlinks.
   skills of their own. That's normal: their conventions get written at the root (step 3).
   Ask the user only for what you can't find there.
 - A repo directory whose name has whitespace is refused: ask the user to rename it. Other names are
-  fine: the developer agent's name is the repo name slugged (`Sis.API` → `sis-api-dev`; `sis_api_dev` in Codex).
+  fine: the developer agent's name is the repo name slugged (`My.API` → `my-api-dev`; `my_api_dev` in Codex).
 - Ask which tools will run the orchestrator: Claude Code, Codex or both. **Default: both** (`--tools`).
 - With Codex, confirm the model for each tier against what the user's account offers (`/model` in Codex).
   **Default:** trivial `gpt-6-luna`, normal `gpt-6.1-sol`, hard `gpt-6-astra` (`CODEX_TRIVIAL`,
@@ -94,7 +94,7 @@ Edit the generated files. Replace every `TODO(orchestrator-setup)` marker:
   or skills inside the repo: the root never edits inside a repo.
 - **Tickets, only if the project uses them**: add a step 0 to the feature flow in `AGENTS.md`. It
   searches for or creates the ticket, puts its key in briefs and PR bodies, and moves the ticket when the
-  PR opens. Set `TICKET_LINE` in `orchestrator.conf` (e.g. `'^Jira: KAN-[0-9]+'`) so `push-pr.sh`
+  PR opens. Set `TICKET_LINE` in `orchestrator.conf` (e.g. `'^Jira: PROJ-[0-9]+'`) so `push-pr.sh`
   enforces it. Without a ticket system, leave the flow as it is. The memory's Ticket column then takes `—`.
 - **Pre-PR gate**: in `.orchestrator/pre-pr-checklist.md` item 2, the exact local checks per repo and
   what CI runs instead. Drop item 14 if no repo has a UI; otherwise list the UI repos in `UI_REPOS`, both

@@ -17,6 +17,9 @@ into the new version's section.
   `api #12 open, web #7 draft` in `PROJECT_STATE.md` failed the check in any repo with a remote.
   The In flight table now checks itself that each PR it lists exists, backticks or not.
 
+- Examples no longer name real projects: `My.API` → `my-api-dev` for agent names, `'^Jira: PROJ-[0-9]+'`
+  for `TICKET_LINE`.
+
 **Workspaces:** copy `templates/orchestrator/scripts/memory-check.py` over `.orchestrator/scripts/memory-check.py`.
 
 ## v0.1.0 — 2026-10-23

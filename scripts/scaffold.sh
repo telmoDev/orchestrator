@@ -7,7 +7,7 @@
 # --no-git: don't version the orchestration layer (no git init, no .gitignore at the root; in
 #           single-repo mode its files go to .git/info/exclude instead of being committed).
 # Repos default to the immediate subdirectories holding .git; if none, the root itself (".").
-# A repo name with whitespace is refused. Agent names are the repo name slugged (Sis.API -> sis-api-dev).
+# A repo name with whitespace is refused. Agent names are the repo name slugged (My.API -> my-api-dev).
 # Each repo's base branch (origin/HEAD, else main, else master) goes to BASE_BRANCHES in orchestrator.conf.
 # Codex models per tier default to CODEX_TRIVIAL / CODEX_NORMAL / CODEX_HARD from the environment.
 # Runs on macOS, Linux and Windows (Git Bash). Creates no symlinks. Never overwrites: an existing file is "skip".
