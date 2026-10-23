@@ -54,6 +54,9 @@ or `py -3`. It creates no symlinks.
   shows no convention, propose the orchestrator's default (Conventional Commits, titles of at most 72
   characters, branches `<type>/<topic>`), write it in its section under *Repo guides*, and set
   `TITLE_PATTERN`/`TITLE_MAX` if the user wants it enforced.
+- Ask whether the session should say when an orchestrator update is out (a SessionStart hook that looks up
+  the latest release in the background, once a day, and also notices a workspace behind the installed
+  skill). **Default: yes.** If not, pass `--no-update-check`.
 - Ask whether to version the orchestration layer in git. **No default: always ask**, it is the user's call.
   Pass `--git` or `--no-git` accordingly; the scaffold refuses to run without one of them.
 - Ask whether the user opts into the `pre-pr-review` for large tasks (2–3 `architect` reviewers plus one
@@ -73,7 +76,7 @@ or `py -3`. It creates no symlinks.
 ## 2. Run the scaffold
 
 ```bash
-bash <this skill's directory>/scripts/scaffold.sh --git|--no-git [--tools claude,codex] <workspace-root> [repo ...]
+bash <this skill's directory>/scripts/scaffold.sh --git|--no-git [--no-update-check] [--tools claude,codex] <workspace-root> [repo ...]
 ```
 
 With no repo arguments it uses the detected ones. It creates:
@@ -82,20 +85,20 @@ With no repo arguments it uses the detected ones. It creates:
 |---|---|---|
 | `AGENTS.md` | both | The guide: orchestrator role, the outcome-driven flow (outcome and criteria before delegating, test-first when `TDD` is on, the orchestrator verifies each criterion as `passed`/`failed`/`blocked`/`pending`), *Standards* (the skills briefs name), token budget with *Model tiers* (Claude and Codex models per tier; escalate one tier after two failures), *Repo guides* for repos with no guide of their own, *Workspace rules* (where the user's corrections and preferences go), and *Tool mapping*: what differs between the two tools, and the platform rules. Created only if absent; otherwise the template goes to `.orchestrator/AGENTS.orchestrator.md` for you to merge |
 | `memory/*.md` | both | The four memory files, empty and in their entry shape |
-| `.orchestrator/orchestrator.conf` | both | `REPOS`, `BASE_BRANCHES` (from `origin/HEAD`, else `main`, else `master`; `TODO` when none), `WORD_BUDGET`, `TDD`, `TDD_TEST_COMMIT`, `TDD_CODE_COMMIT`, `TDD_REPOS`, `TDD_SINCE`, `CODEX_ONLY_SKILLS`; optional `GIT_WRAPPER`, `TICKET_LINE`, `TITLE_PATTERN`, `TITLE_MAX`, `ATTRIBUTION`, `ADR_DIR`, `DECISION_LOG` |
+| `.orchestrator/orchestrator.conf` | both | `REPOS`, `BASE_BRANCHES` (from `origin/HEAD`, else `main`, else `master`; `TODO` when none), `WORD_BUDGET`, `TDD`, `TDD_TEST_COMMIT`, `TDD_CODE_COMMIT`, `TDD_REPOS`, `TDD_SINCE`, `CODEX_ONLY_SKILLS`; optional `GIT_WRAPPER`, `TICKET_LINE`, `TITLE_PATTERN`, `TITLE_MAX`, `ATTRIBUTION`, `ADR_DIR`, `DECISION_LOG`, `UPDATE_CHECK` |
 | `.orchestrator/pre-pr-checklist.md` | both | The pre-PR gate: part A mechanical (owning agent), part B the flow's review, part C quality (defaults the user adapts). Grows one line per review comment it missed |
 | `.orchestrator/scripts/` | both | `memory-state.sh` and `memory-check.py` (write the git-derived state, refuse memory git contradicts); `pre-pr-pass.sh` (stamp the commit that passed the gate; with `TDD="strict"` it refuses a code commit no test commit precedes; `TDD_EXEMPT="<reason>"` skips it once); `push-pr.sh` (push and open the PR, refusing an unstamped HEAD and a stale base, plus what the config sets: `TICKET_LINE`, `TITLE_PATTERN`, `TITLE_MAX`, `ATTRIBUTION`); `sync-skills.sh` (copy `.agents/skills/` into `.claude/skills/`) |
-| `.orchestrator/hooks/` | both | `decision-index.sh` (one line per ADR/decision in force, from `ADR_DIR`/`DECISION_LOG`; silent while they're empty) and `session-memory.sh` (prints the memory for Codex) |
+| `.orchestrator/hooks/` | both | `decision-index.sh` (one line per ADR/decision in force, from `ADR_DIR`/`DECISION_LOG`; silent while they're empty), `session-memory.sh` (prints the memory for Codex), and `update-check.sh` (says when an orchestrator release is out or the workspace is behind the installed skill; the lookup runs in the background once a day) |
 | `.agents/skills/` | both | `sync-memory`, the default standards `software-principles` and `design-patterns`, and `pre-pr-review` (Codex's version of the workflow). The one copy to edit |
 | `.gitattributes` | both | Keeps scripts LF, so Git for Windows doesn't break them with CRLF |
 | `CLAUDE.md` | Claude | Imports `AGENTS.md` and the two memory files |
-| `.claude/settings.json` | Claude | The SessionStart decision index, `autoCompactWindow: 200000`, idle compaction from 120k (`env.CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS`), `skillListingMaxDescChars: 300`, `enabledPlugins` |
+| `.claude/settings.json` | Claude | The SessionStart decision index and update notice, `autoCompactWindow: 200000`, idle compaction from 120k (`env.CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS`), `skillListingMaxDescChars: 300`, `enabledPlugins` |
 | `.claude/agents/` | Claude | `explorer` (Haiku), `architect` (Opus), `<repo-slug>-dev` (Sonnet, compacts at 150k): the source the Codex agents are rendered from |
 | `.claude/workflows/pre-pr-review.js` | Claude | Saved workflow: `architect` reviewers per group of checklist items, then a Sonnet `architect` that tries to refute each finding |
 | `.claude/skills/` | Claude | Copies of `.agents/skills/` except `CODEX_ONLY_SKILLS` |
 | `.codex/agents/*.toml` | Codex | The same agents, rendered by `scripts/agent-to-codex.py`: no model (the spawn request picks the tier's), except `explorer` on the trivial model |
 | `.codex/config.toml` | Codex | `model_auto_compact_token_limit = 200000`, `[agents]` default model (normal tier) and medium effort |
-| `.codex/hooks.json` | Codex | SessionStart: the memory and the decision index |
+| `.codex/hooks.json` | Codex | SessionStart: the memory, the decision index and the update notice |
 | `.gitignore` | both | Ignores the app repos, so the root versions only the orchestration layer |
 
 With `--git` it runs `git init` at the root when the root isn't a repo yet and has subrepos. It doesn't commit.

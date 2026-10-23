@@ -11,6 +11,17 @@ into the new version's section.
 
 ## Unreleased
 
+- Update notice: a SessionStart hook, `.orchestrator/hooks/update-check.sh`, says when a newer orchestrator
+  release is out (looked up in the background, at most once a day, so the session never waits on the
+  network) and when the workspace's `TEMPLATE_VERSION` is behind the installed skill. The session tells the
+  user and asks; it updates only after the user explicitly accepts, and so does `INSTALL.md`, which now
+  waits for a yes before moving the clone to a new release (and a separate yes per workspace). `UPDATE_CHECK="off"` silences it; setup asks (`scaffold.sh --no-update-check`).
+
+**Workspaces:** optional. Copy `templates/orchestrator/hooks/update-check.sh` to `.orchestrator/hooks/`, add
+`UPDATE_CHECK="on"` to `orchestrator.conf`, add the hook to SessionStart in `.claude/settings.json` and
+`.codex/hooks.json` (as in the templates), and the *Update notice* row and the line after *Resume* to
+`AGENTS.md`. Then set `TEMPLATE_VERSION` to this version.
+
 ## v0.3.0 — 2026-10-23
 
 - Whether to version a workspace's orchestration layer is the user's call: setup always asks, with no

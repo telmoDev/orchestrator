@@ -60,6 +60,9 @@ each repo's guide and history, and when you correct how it works or state a pref
   `bash .orchestrator/scripts/push-pr.sh` after the gate, and never merges.
 - When a reviewer comments something the checklist would have caught, the orchestrator adds a line to the
   checklist so it doesn't happen again.
-- Update the skill: ask your agent to update the orchestrator (it moves to the latest release and tells
-  you what changed). Existing workspaces keep their files and their `TEMPLATE_VERSION`; ask the agent to
+- When a new release is out, the session tells you at start (once the background check has seen it), and
+  also when your workspace is behind the installed version. Nothing is updated unless you say yes. Turn it off with `UPDATE_CHECK="off"` in
+  `.orchestrator/orchestrator.conf`.
+- Update the skill: ask your agent to update the orchestrator. It tells you what changed and waits for your
+  yes before moving to the latest release. Existing workspaces keep their files and their `TEMPLATE_VERSION`; ask the agent to
   bring a workspace up to date when you want it, and it follows the *Workspaces* notes in `CHANGELOG.md`.

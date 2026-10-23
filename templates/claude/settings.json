@@ -9,6 +9,13 @@
             "timeout": 10,
             "statusMessage": "Loading the decision index",
             "shell": "bash"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-$PWD}/.orchestrator/hooks/update-check.sh\"",
+            "timeout": 10,
+            "statusMessage": "Checking for orchestrator updates",
+            "shell": "bash"
           }
         ]
       }

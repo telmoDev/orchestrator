@@ -45,8 +45,10 @@ git clone --branch "$tag" "$url" ~/orchestrator-setup
 
 If the folder already exists and is this repository (`git -C ~/orchestrator-setup remote get-url origin`),
 update it instead: `git -C ~/orchestrator-setup fetch --tags`, find the latest tag as above, read the
-`CHANGELOG.md` sections between the installed version (`VERSION`) and that tag, tell the person what
-changes, then `git -C ~/orchestrator-setup checkout <tag>`. If the folder is something else, ask the
+`CHANGELOG.md` sections between the installed version (`VERSION`) and that tag, and tell the person what
+changes. **Stop and wait for the person to accept the update.** Only after an explicit yes, run
+`git -C ~/orchestrator-setup checkout <tag>`; without one, leave the installed version as it is. Bringing a
+workspace up to date (its *Workspaces* lines) needs its own yes, workspace by workspace. If the folder is something else, ask the
 person for another folder. Keep the clone: both tools read the skill from it.
 
 ## 4. Install the skill

@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # Scaffold the orchestrator layer into a workspace root, for Claude Code, Codex or both.
-#   bash scaffold.sh --git|--no-git [--tools claude,codex] <workspace-root> [repo ...]
+#   bash scaffold.sh --git|--no-git [--no-update-check] [--tools claude,codex] <workspace-root> [repo ...]
 # Shared: AGENTS.md, memory/, .orchestrator/ (config, checklist, scripts, hooks), .agents/skills/.
 # Claude Code: CLAUDE.md (imports AGENTS.md), .claude/ (settings, agents, workflow, copies of the skills).
 # Codex: .codex/ (config.toml, hooks.json, agents/*.toml rendered from the same agent sources).
 # --git:    version the orchestration layer (git init at the root when it has subrepos, a root .gitignore).
 # --no-git: don't version it (no git init, no .gitignore at the root; in single-repo mode its files go to
 #           .git/info/exclude instead of being committed). One of the two is required: it is the user's call.
+# --no-update-check: UPDATE_CHECK="off" (no notice at session start when an orchestrator update is out).
 # Repos default to the immediate subdirectories holding .git; if none, the root itself (".").
 # A repo name with whitespace is refused. Agent names are the repo name slugged (My.API -> my-api-dev).
 # Each repo's base branch (origin/HEAD, else main, else master) goes to BASE_BRANCHES in orchestrator.conf.
@@ -15,11 +16,12 @@
 set -euo pipefail
 here="$(cd "$(dirname "$0")/.." && pwd)"
 tpl="$here/templates"
-root_git="" tools="claude,codex"
+root_git="" tools="claude,codex" update_check=on
 while [ $# -gt 0 ]; do
   case "$1" in
     --git) root_git=yes; shift ;;
     --no-git) root_git=no; shift ;;
+    --no-update-check) update_check=off; shift ;;
     --tools) tools="${2:?--tools needs claude, codex or claude,codex}"; shift 2 ;;
     *) break ;;
   esac
@@ -109,8 +111,8 @@ render() { # render <template> <dest> [repo]
   [ -n "$repo" ] && { guide="$(guide_of "$repo")"; agent="$(agent_of "$repo")"; base="$(base_for "$repo")"; }
   ROOT="$root_shown" NAME="$name" REPOS="$repo_list" REPO="$repo" REPO_GUIDE="$guide" AGENT="$agent" BASE="$base" BASES="$bases" \
   REPO_ROWS="$repo_rows" DEV_ROWS="$dev_rows" REPO_SECTIONS="$repo_sections" DATE="$(date +%F)" \
-  ROOT_GIT="$root_git" ROOT_VCS="$root_vcs" CODEX_TRIVIAL="$codex_trivial" CODEX_NORMAL="$codex_normal" CODEX_HARD="$codex_hard" VERSION="$version" \
-    perl -pe 's/\{\{(ROOT|NAME|REPOS|REPO_GUIDE|REPO_SECTIONS|REPO_ROWS|DEV_ROWS|REPO|AGENT|BASES|BASE|DATE|ROOT_GIT|ROOT_VCS|CODEX_TRIVIAL|CODEX_NORMAL|CODEX_HARD|VERSION)\}\}/$ENV{$1}/g' "$src" >"$dest"
+  ROOT_GIT="$root_git" ROOT_VCS="$root_vcs" CODEX_TRIVIAL="$codex_trivial" CODEX_NORMAL="$codex_normal" CODEX_HARD="$codex_hard" VERSION="$version" UPDATE_CHECK="$update_check" \
+    perl -pe 's/\{\{(ROOT|NAME|REPOS|REPO_GUIDE|REPO_SECTIONS|REPO_ROWS|DEV_ROWS|REPO|AGENT|BASES|BASE|DATE|ROOT_GIT|ROOT_VCS|CODEX_TRIVIAL|CODEX_NORMAL|CODEX_HARD|VERSION|UPDATE_CHECK)\}\}/$ENV{$1}/g' "$src" >"$dest"
   case "$dest" in *.sh|*.py) chmod +x "$dest" ;; esac
   created+=("${dest#$root/}")
 }
