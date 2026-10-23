@@ -7,6 +7,11 @@ for **Claude Code**, **Codex** or both, on **macOS, Linux and Windows**: one sha
 session memory with `sync-memory`, explorer/architect/developer agents, an outcome-driven flow with
 test-first, model tiers by task size, and a pre-PR gate.
 
+It brings good-practice defaults that hold for any stack (design principles and patterns, test-first, a
+quality checklist) and adapts them to the user: setup reads each repo's conventions and asks what to keep,
+and later corrections become workspace rules. Stack, commit and PR conventions, tickets and attribution are
+the user's.
+
 - `SKILL.md`: what the skill does and what it asks before writing.
 - `scripts/scaffold.sh`: writes the templates into a workspace.
 - `scripts/agent-to-codex.py`: renders a Claude Code agent as a Codex custom agent.

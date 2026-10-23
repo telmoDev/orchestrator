@@ -109,13 +109,10 @@ conf="$root/.orchestrator/orchestrator.conf"
 grep -q '^TEMPLATE_VERSION=' "$conf" || printf '%s\n' \
   "# The orchestrator-setup release this workspace was last migrated or updated with (see the skill's CHANGELOG.md)." \
   "TEMPLATE_VERSION=\"$version\"" >> "$conf"
-grep -q '^UI_REPOS=' "$conf" || printf '%s\n' \
-  "# Repos with a user interface: the pre-pr-review skill adds the UI group for them. Keep in step with UI_REPOS in .claude/workflows/pre-pr-review.js." \
-  'UI_REPOS=""' >> "$conf"
 grep -q '^CODEX_ONLY_SKILLS=' "$conf" || printf '%s\n' \
   "# Skills in .agents/skills that sync-skills.sh does not copy to .claude/skills (Claude Code has its own equivalent)." \
   'CODEX_ONLY_SKILLS="pre-pr-review"' >> "$conf"
-done_+=("orchestrator.conf: TEMPLATE_VERSION=$version, UI_REPOS, CODEX_ONLY_SKILLS")
+done_+=("orchestrator.conf: TEMPLATE_VERSION=$version, CODEX_ONLY_SKILLS")
 if has claude; then
   bash "$root/.orchestrator/scripts/sync-skills.sh" >/dev/null && done_+=("copied .agents/skills/ into .claude/skills/")
 fi
@@ -151,7 +148,7 @@ left=$(cd "$root" && grep -rlE '(^|[^\w./-])\.claude/(scripts|hooks|tmp|briefs|o
 cat <<EOF
 todo   AGENTS.md: make the wording tool-neutral (Agent tool, SendMessage, /code-review, /usage, model names)
        and add the *Tool mapping* section from $tpl/AGENTS.md, adapted to this workspace.
-todo   .agents/skills/pre-pr-review: match its groups and item numbers to .claude/workflows/pre-pr-review.js.
-todo   UI_REPOS in .orchestrator/orchestrator.conf; regenerate .codex/agents when .claude/agents change.
+todo   .agents/skills/pre-pr-review: match its groups to .claude/workflows/pre-pr-review.js and the checklist.
+todo   regenerate .codex/agents when .claude/agents change.
 todo   verify (SKILL.md step 4), then commit at the root.
 EOF

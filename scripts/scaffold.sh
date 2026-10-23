@@ -84,10 +84,10 @@ for r in "${repos[@]}"; do
     guide="\`$r/$own\`"
   else
     guide="*Repo guides* › \`$label\` below"
-    repo_sections+="### \`$label\`"$'\n\n'"- Stack: TODO(orchestrator-setup)"$'\n'"- Layout: TODO(orchestrator-setup): where routes, domain logic, UI or tests live"$'\n'"- Conventions: TODO(orchestrator-setup): naming, error handling, state, styling (only what the code shows)"$'\n'"- Checks: TODO(orchestrator-setup): test, lint, format, typecheck commands"$'\n'
+    repo_sections+="### \`$label\`"$'\n\n'"- Stack: TODO(orchestrator-setup)"$'\n'"- Layout: TODO(orchestrator-setup): where the main code, the tests and the config live"$'\n'"- Conventions: TODO(orchestrator-setup): naming, error handling, commits and PR titles (only what the code and the history show)"$'\n'"- Checks: TODO(orchestrator-setup): the test command and the other local checks"$'\n'
   fi
   repo_rows+="| \`$label\` | TODO(orchestrator-setup): stack | \`$(base_for "$r")\` | $guide |"$'\n'
-  dev_rows+="| \`$agent\` | normal (by tier) | test-first implementation in \`$label\` |"$'\n'
+  dev_rows+="| \`$agent\` | normal (by tier) | implementation in \`$label\` |"$'\n'
 done
 [ -n "$repo_sections" ] || repo_sections="All repos have their own guide."$'\n'
 layer="\`AGENTS.md\`, \`CLAUDE.md\`, \`.orchestrator/\`, \`.agents/\`, \`.claude/\`, \`.codex/\`, \`memory/\`"
@@ -130,6 +130,7 @@ for f in "$tpl"/memory/*.md; do render "$f" "$root/memory/$(basename "$f")" || t
 render "$tpl/orchestrator/orchestrator.conf" "$root/.orchestrator/orchestrator.conf" || true
 render "$tpl/orchestrator/pre-pr-checklist.md" "$root/.orchestrator/pre-pr-checklist.md" || true
 for f in "$tpl"/orchestrator/scripts/* "$tpl"/orchestrator/hooks/*; do
+  [ -f "$f" ] || continue  # e.g. a __pycache__ left by a local py_compile
   rel=${f#$tpl/orchestrator/}; render "$f" "$root/.orchestrator/$rel" || true
 done
 for d in "$tpl"/skills/*/; do s=$(basename "$d"); render "$d/SKILL.md" "$root/.agents/skills/$s/SKILL.md" || true; done

@@ -1,6 +1,6 @@
 ---
 name: explorer
-description: Fast, low-cost, read-only search across the repos of the {{NAME}} workspace ({{REPOS}}). Use it to locate files, symbols, routes, endpoints, migrations, decisions or usages, to answer "where/how is X done" questions, and for simple lookups whose result is a short conclusion rather than a change. Never use it to edit code, design, or review.
+description: Fast, low-cost, read-only search across the repos of the {{NAME}} workspace ({{REPOS}}). Use it to locate files, symbols, entry points, configuration, decisions or usages, to answer "where/how is X done" questions, and for simple lookups whose result is a short conclusion rather than a change. Never use it to edit code, design, or review.
 tools: Read, Grep, Glob, Bash
 model: haiku
 ---

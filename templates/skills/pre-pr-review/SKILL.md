@@ -19,7 +19,7 @@ Paste this into each brief, filled in:
 ```
 Workspace root: {{ROOT}}. Repo: {{ROOT}}/<repo>. Branch: <branch>, base origin/<base>. Ticket: <ticket>.
 Spec the diff implements: <spec>  (none given: find the spec and the decisions the diff cites; AGENTS.md says where they live)
-Outcome the diff must meet: <outcome>  (none given: report item 15 as failed)
+Outcome the diff must meet: <outcome>  (none given: report item 7 as failed)
 The checklist is {{ROOT}}/.orchestrator/pre-pr-checklist.md. Start from
 `git -C {{ROOT}}/<repo> diff --stat origin/<base>...<branch>`, then open only the files that carry risk for your items.
 Read-only: never edit, commit, branch or push. Review as the human reviewer would: report only defects that
@@ -32,11 +32,10 @@ Model: the normal tier unless `tier` is `hard`, then the hard tier (AGENTS.md �
 
 | Group | Checklist items |
 |---|---|
-| contract | 5, 6, 7, 13 and 15 (contract line by line, no interim persisted answers, docs move with the code, decision records whole, outcome met) |
-| rules | 8, 9, 10, 11, 12 and 16 (repo rules and skills, module boundaries, failure paths, tests per branch, no third copy, test first) |
-| ui | 14 (UI states and races, i18n, design system), only when `<repo>` is in `UI_REPOS` in `.orchestrator/orchestrator.conf` |
+| flow | in part B (contract line by line, repo rules and workspace standards, outcome met, test first when TDD is on) |
+| quality | in part C, every one of them |
 
-Ask each: "Check checklist items <items> against this branch's diff. Return every failure as one line
+An item that names the repos it covers applies only to those. Ask each: "Check the checklist items <items> against this branch's diff. Return every failure as one line
 `item · file:line · what is wrong and what the rule or spec says`, or `none`."
 
 ## 3. Verify: one `architect` on the normal tier per finding, in parallel

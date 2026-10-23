@@ -19,8 +19,29 @@ into the new version's section.
 
 - Examples no longer name real projects: `My.API` → `my-api-dev` for agent names, `'^Jira: PROJ-[0-9]+'`
   for `TICKET_LINE`.
+- Good-practice defaults, adapted to the user. The orchestrator keeps its own way of working (outcome-driven
+  flow, test-first, `software-principles`, `design-patterns`, the quality checklist), which holds for any
+  stack; setup reads each repo's conventions from its history and asks which defaults to keep, rewrite or
+  drop. New `AGENTS.md` › *Standards* lists the skills briefs name; *Workspace rules* records the user's
+  corrections and preferences as they come.
+- What belongs to the user's team is no longer imposed: commit and PR title format, attribution and the way
+  the base is brought in follow each repo's convention. `push-pr.sh` enforces only what `orchestrator.conf`
+  sets (`TITLE_PATTERN`, `TITLE_MAX`, `ATTRIBUTION="refuse"`, `TICKET_LINE`); the template's
+  `.claude/settings.json` no longer empties attribution.
+- `pre-pr-pass.sh` tells test commits from code commits with `TDD_TEST_COMMIT` and `TDD_CODE_COMMIT`
+  (defaults: Conventional Commits) instead of hard-coded `test`/`feat`/`fix`.
+- The checklist has three parts: A mechanical (1–4), B the flow's review (5–8), C quality (9–16, the
+  defaults the user adapts, where lines from reviews also go). The review workflow and skill group by part,
+  so `UI_REPOS` is gone: the UI item names the repos it covers.
+- The guide, agents and checklist speak of contracts, interfaces and data shapes, not endpoints and payloads.
 
 **Workspaces:** copy `templates/orchestrator/scripts/memory-check.py` over `.orchestrator/scripts/memory-check.py`.
+The rest is optional; a workspace keeps working with its current files. To adopt it, copy `pre-pr-pass.sh`
+and `push-pr.sh` together with these lines in `orchestrator.conf`: `TDD_TEST_COMMIT='^test(\(|:|!)'`,
+`TDD_CODE_COMMIT='^(feat|fix)(\(|:|!)'`, and, to keep the old checks, `TITLE_MAX=72` and `ATTRIBUTION="refuse"`.
+Copy the checklist, `.claude/workflows/pre-pr-review.js` and `.agents/skills/pre-pr-review/` together (they
+share the numbering), moving the workspace's own review lines into part C. Add the *Standards* section to
+`AGENTS.md` listing the standard skills the workspace already has.
 
 ## v0.1.0 — 2026-10-23
 
