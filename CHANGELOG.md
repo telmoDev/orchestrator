@@ -11,6 +11,8 @@ into the new version's section.
 
 ## Unreleased
 
+## v0.3.0 — 2026-10-23
+
 - Whether to version a workspace's orchestration layer is the user's call: setup always asks, with no
   default, and `scaffold.sh` refuses to run without `--git` or `--no-git`.
 
