@@ -1,6 +1,6 @@
 # Progress
 
-Partial tasks only, newest first, written by `/sync-memory`. A task leaves this file when it is done: its PR and the git history of `memory/` keep the record.
+Partial tasks only, newest first, written by `sync-memory`. A task leaves this file when it is done: its PR and the git history of `memory/` keep the record.
 
 Entry shape:
 ```

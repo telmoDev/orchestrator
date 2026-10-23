@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # SessionStart: one line per ADR and decision-log entry in force, so the session knows what is binding
-# without loading the docs. Paths come from ADR_DIR and DECISION_LOG in .claude/orchestrator.conf; with
+# without loading the docs. Paths come from ADR_DIR and DECISION_LOG in .orchestrator/orchestrator.conf; with
 # neither set it prints nothing. Superseded, rejected and deprecated entries are left out; partly
 # superseded ones are marked.
-root="${CLAUDE_PROJECT_DIR:-$PWD}"
-[ -f "$root/.claude/orchestrator.conf" ] || exit 0
-. "$root/.claude/orchestrator.conf"
+root="$(cd "$(dirname "$0")/../.." && pwd)"  # the workspace root, whichever tool runs this
+[ -f "$root/.orchestrator/orchestrator.conf" ] || exit 0
+. "$root/.orchestrator/orchestrator.conf"
 adr="${ADR_DIR:+$root/$ADR_DIR}"; dl="${DECISION_LOG:+$root/$DECISION_LOG}"
 { [ -n "$adr" ] && [ -d "$adr" ]; } || { [ -n "$dl" ] && [ -f "$dl" ]; } || exit 0
 skip='^(Superseded|Rejected|Deprecated)'

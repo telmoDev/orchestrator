@@ -1,0 +1,10 @@
+# Codex project config for the orchestrator (loaded only when this project is trusted).
+# The Claude Code equivalents are in .claude/settings.json; AGENTS.md › Tool mapping lists both.
+
+# Compact well before the full window, as Claude Code does at 200k.
+model_auto_compact_token_limit = 200000
+
+[agents]
+# Subagents default to the normal tier at medium effort; a spawn request names another tier's model.
+default_subagent_model = "{{CODEX_NORMAL}}"
+default_subagent_reasoning_effort = "medium"

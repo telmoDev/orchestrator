@@ -11,7 +11,7 @@ Stack: TODO(orchestrator-setup): language, framework, package manager.
 
 Before writing code:
 - Read the repo's guide: {{REPO_GUIDE}}. Also read its `README.md` if there is one.
-- Read `{{ROOT}}/.claude/skills/software-principles/SKILL.md` (or the repo's own copy), plus any skill the brief names. Read `design-patterns` only when the brief names it. Apply them: the simplest design that meets the requirement, and a pattern only when it solves a real problem.
+- Read `{{ROOT}}/.agents/skills/software-principles/SKILL.md` (or the repo's own copy), plus any skill the brief names. Read `design-patterns` only when the brief names it. Apply them: the simplest design that meets the requirement, and a pattern only when it solves a real problem.
 - Follow the repo's existing conventions over any principle. Don't introduce a second way of doing the same thing.
 - Start from the `file:line` points the brief gives. Explore beyond them only as far as the task needs.
 

@@ -11,18 +11,18 @@ export const meta = {
 // args: { repo, branch, base = 'main', ticket?: 'KEY-n', spec?: 'paths or sections the diff implements',
 //         outcome?: 'the outcome block (goal, outcome, criteria O1…)', tier?: 'normal' | 'hard' (default: hard) }
 const ROOT = '{{ROOT}}'
-// Repos with a user interface get the UI group (checklist item 14).
+// Repos with a user interface get the UI group (checklist item 14). Keep in step with UI_REPOS in .orchestrator/orchestrator.conf.
 const UI_REPOS = [] // TODO(orchestrator-setup): e.g. ['web']
 const { repo, branch } = args || {}
 const base = (args && args.base) || 'main'
-// Model tiers (CLAUDE.md): reviewers run on Sonnet for a normal-tier task, on the architect's Opus for a hard one.
+// Model tiers (AGENTS.md): reviewers run on Sonnet for a normal-tier task, on the architect's Opus for a hard one.
 const reviewModel = args && args.tier && args.tier !== 'hard' ? { model: 'sonnet' } : {}
 if (!repo || !branch) throw new Error('args needs repo and branch')
 
 const CONTEXT = `Workspace root: ${ROOT}. Repo: ${ROOT}/${repo}. Branch: ${branch}, base origin/${base}.${args.ticket ? ` Ticket: ${args.ticket}.` : ''}
-${args.spec ? `Spec the diff implements: ${args.spec}.` : 'Find the spec and the decisions the diff cites (see the repo guide in CLAUDE.md for where they live).'}
+${args.spec ? `Spec the diff implements: ${args.spec}.` : 'Find the spec and the decisions the diff cites (see the repo guide in AGENTS.md for where they live).'}
 ${args.outcome ? `Outcome the diff must meet:\n${args.outcome}` : 'The outcome and its criteria are in the PR body draft or the brief; if none is given, report item 15 as failed.'}
-The checklist is ${ROOT}/.claude/pre-pr-checklist.md. Start from \`git -C ${ROOT}/${repo} diff --stat origin/${base}...${branch}\`, then open only the files that carry risk for your items.
+The checklist is ${ROOT}/.orchestrator/pre-pr-checklist.md. Start from \`git -C ${ROOT}/${repo} diff --stat origin/${base}...${branch}\`, then open only the files that carry risk for your items.
 Read-only: never edit, commit, branch or push. Review as the human reviewer would: report only defects that break a checklist item, not style preferences.`
 
 const GROUPS = [

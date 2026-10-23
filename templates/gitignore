@@ -3,6 +3,6 @@
 # Local-only files
 .DS_Store
 .claude/settings.local.json
-.claude/tmp/
+.orchestrator/tmp/
 .env
 .env.*

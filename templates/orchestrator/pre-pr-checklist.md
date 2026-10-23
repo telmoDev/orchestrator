@@ -1,12 +1,12 @@
 # Pre-PR checklist
 
-The gate of flow step 4 (`CLAUDE.md`), at any size of task. Nothing is pushed (a new PR, or new commits on an
+The gate of flow step 4 (`AGENTS.md`), at any size of task. Nothing is pushed (a new PR, or new commits on an
 open one) until every item below passes on the exact commit being pushed. The goal: the human review finds
 nothing we could have found ourselves.
 
 The list grows from real reviews. When a review brings a comment this list would not have caught, add one line
 for it (with the PR number in brackets) in the same session that answers the review. Keep the item numbers
-stable: `.claude/workflows/pre-pr-review.js` groups part B by number.
+stable: `.claude/workflows/pre-pr-review.js` and the `pre-pr-review` skill group part B by number.
 
 ## A. Mechanical (the agent that owns the branch runs these and reports the results)
 
@@ -57,4 +57,4 @@ stable: `.claude/workflows/pre-pr-review.js` groups part B by number.
 
 The reviewer reports `PASS` or a list of failures (item number, file, one line each). Failures go back to the
 agent that owns the code, and the gate runs again on the new commit. On `PASS`, the orchestrator stamps that
-commit (`.claude/scripts/pre-pr-pass.sh <repo> <branch>`); `push-pr.sh` refuses to push anything else.
+commit (`bash .orchestrator/scripts/pre-pr-pass.sh <repo> <branch>`); `push-pr.sh` refuses to push anything else.

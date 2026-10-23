@@ -1,18 +1,35 @@
 #!/usr/bin/env bash
-# Scaffold the orchestrator layer (CLAUDE.md, memory/, .claude/) into a workspace root.
-#   scaffold.sh [--no-git] <workspace-root> [repo ...]
+# Scaffold the orchestrator layer into a workspace root, for Claude Code, Codex or both.
+#   bash scaffold.sh [--no-git] [--tools claude,codex] <workspace-root> [repo ...]
+# Shared: AGENTS.md, memory/, .orchestrator/ (config, checklist, scripts, hooks), .agents/skills/.
+# Claude Code: CLAUDE.md (imports AGENTS.md), .claude/ (settings, agents, workflow, copies of the skills).
+# Codex: .codex/ (config.toml, hooks.json, agents/*.toml rendered from the same agent sources).
 # --no-git: don't version the orchestration layer (no git init, no .gitignore at the root; in
 #           single-repo mode its files go to .git/info/exclude instead of being committed).
 # Repos default to the immediate subdirectories holding .git; if none, the root itself (".").
 # A repo name with whitespace is refused. Agent names are the repo name slugged (Sis.API -> sis-api-dev).
 # Each repo's base branch (origin/HEAD, else main, else master) goes to BASE_BRANCHES in orchestrator.conf.
-# Never overwrites: an existing file is reported as "skip".
+# Codex models per tier default to CODEX_TRIVIAL / CODEX_NORMAL / CODEX_HARD from the environment.
+# Runs on macOS, Linux and Windows (Git Bash). Creates no symlinks. Never overwrites: an existing file is "skip".
 set -euo pipefail
 here="$(cd "$(dirname "$0")/.." && pwd)"
 tpl="$here/templates"
-root_git=yes
-[ "${1:-}" = "--no-git" ] && { root_git=no; shift; }
-root="$(cd "${1:?usage: scaffold.sh [--no-git] <workspace-root> [repo ...]}" && pwd)"; shift
+root_git=yes tools="claude,codex"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --no-git) root_git=no; shift ;;
+    --tools) tools="${2:?--tools needs claude, codex or claude,codex}"; shift 2 ;;
+    *) break ;;
+  esac
+done
+case ",$tools," in *,claude,*|*,codex,*) ;; *) echo "scaffold: --tools takes claude, codex or both" >&2; exit 2 ;; esac
+has() { case ",$tools," in *",$1,"*) return 0 ;; *) return 1 ;; esac; }
+root="$(cd "${1:?usage: scaffold.sh [--no-git] [--tools claude,codex] <workspace-root> [repo ...]}" && pwd)"; shift
+# The path written into the guides: on Windows (Git Bash) the native C:/... form, which every tool understands.
+root_shown=$(cd "$root" && { pwd -W 2>/dev/null || pwd; })
+codex_trivial="${CODEX_TRIVIAL:-gpt-6-luna}" codex_normal="${CODEX_NORMAL:-gpt-6.1-sol}" codex_hard="${CODEX_HARD:-gpt-6-astra}"
+py=""; for c in python3 python "py -3"; do $c -c 'import sys; sys.exit(sys.version_info < (3, 8))' >/dev/null 2>&1 && { py=$c; break; }; done
+[ -n "$py" ] || { echo "scaffold: Python 3.8+ not found (python3, python or py -3)" >&2; exit 2; }
 
 if [ $# -gt 0 ]; then
   repos=("$@")
@@ -53,85 +70,105 @@ repo_list="${repos[*]}"
 repo_rows=""; dev_rows=""; repo_sections=""
 guide_of() { # the guide a repo's agent reads: its own CLAUDE.md/AGENTS.md, or its section at the root
   local r=$1
-  for g in CLAUDE.md AGENTS.md; do
-    [ "$r" != "." ] && [ -f "$root/$r/$g" ] && { echo "\`$root/$r/$g\`"; return; }
+  for g in AGENTS.md CLAUDE.md; do
+    [ "$r" != "." ] && [ -f "$root/$r/$g" ] && { echo "\`$root_shown/$r/$g\`"; return; }
   done
-  echo "its section under *Repo guides* in \`$root/CLAUDE.md\` (it has no CLAUDE.md of its own)"
+  echo "its section under *Repo guides* in \`$root_shown/AGENTS.md\` (it has no guide of its own)"
 }
 for r in "${repos[@]}"; do
   label=$([ "$r" = "." ] && echo "$name (root)" || echo "$r")
   agent=$(agent_of "$r")
   if [ "$r" != "." ] && { [ -f "$root/$r/CLAUDE.md" ] || [ -f "$root/$r/AGENTS.md" ]; }; then
-    own=$([ -f "$root/$r/CLAUDE.md" ] && echo CLAUDE.md || echo AGENTS.md)
+    own=$([ -f "$root/$r/AGENTS.md" ] && echo AGENTS.md || echo CLAUDE.md)
     guide="\`$r/$own\`"
   else
     guide="*Repo guides* › \`$label\` below"
     repo_sections+="### \`$label\`"$'\n\n'"- Stack: TODO(orchestrator-setup)"$'\n'"- Layout: TODO(orchestrator-setup): where routes, domain logic, UI or tests live"$'\n'"- Conventions: TODO(orchestrator-setup): naming, error handling, state, styling (only what the code shows)"$'\n'"- Checks: TODO(orchestrator-setup): test, lint, format, typecheck commands"$'\n'
   fi
   repo_rows+="| \`$label\` | TODO(orchestrator-setup): stack | \`$(base_for "$r")\` | $guide |"$'\n'
-  dev_rows+="| \`$agent\` | Sonnet (Haiku or Opus by tier) | test-first implementation in \`$label\` |"$'\n'
+  dev_rows+="| \`$agent\` | normal (by tier) | test-first implementation in \`$label\` |"$'\n'
 done
 [ -n "$repo_sections" ] || repo_sections="All repos have their own guide."$'\n'
+layer="\`AGENTS.md\`, \`CLAUDE.md\`, \`.orchestrator/\`, \`.agents/\`, \`.claude/\`, \`.codex/\`, \`memory/\`"
 if [ "$root_git" = yes ]; then
-  root_vcs="The root is its own small git repo. It ignores the app repos and versions only the orchestration layer (\`CLAUDE.md\`, \`.claude/\`, \`memory/\`)."
+  root_vcs="The root is its own small git repo. It ignores the app repos and versions only the orchestration layer ($layer)."
 else
-  root_vcs="The orchestration layer (\`CLAUDE.md\`, \`.claude/\`, \`memory/\`) is not versioned: never run git at the root and never commit it to a repo."
+  root_vcs="The orchestration layer ($layer) is not versioned: never run git at the root and never commit it to a repo."
 fi
 
 created=(); skipped=()
 render() { # render <template> <dest> [repo]
   local src=$1 dest=$2 repo=${3:-}
-  if [ -e "$dest" ] || [ -L "$dest" ]; then skipped+=("${dest#$root/}"); return; fi
+  if [ -e "$dest" ] || [ -L "$dest" ]; then skipped+=("${dest#$root/}"); return 1; fi
   mkdir -p "$(dirname "$dest")"
   local guide="" agent="" base=""
   [ -n "$repo" ] && { guide="$(guide_of "$repo")"; agent="$(agent_of "$repo")"; base="$(base_for "$repo")"; }
-  ROOT="$root" NAME="$name" REPOS="$repo_list" REPO="$repo" REPO_GUIDE="$guide" AGENT="$agent" BASE="$base" BASES="$bases" \
+  ROOT="$root_shown" NAME="$name" REPOS="$repo_list" REPO="$repo" REPO_GUIDE="$guide" AGENT="$agent" BASE="$base" BASES="$bases" \
   REPO_ROWS="$repo_rows" DEV_ROWS="$dev_rows" REPO_SECTIONS="$repo_sections" DATE="$(date +%F)" \
-  ROOT_GIT="$root_git" ROOT_VCS="$root_vcs" \
-    perl -pe 's/\{\{(ROOT|NAME|REPOS|REPO_GUIDE|REPO_SECTIONS|REPO_ROWS|DEV_ROWS|REPO|AGENT|BASES|BASE|DATE|ROOT_GIT|ROOT_VCS)\}\}/$ENV{$1}/g' "$src" >"$dest"
+  ROOT_GIT="$root_git" ROOT_VCS="$root_vcs" CODEX_TRIVIAL="$codex_trivial" CODEX_NORMAL="$codex_normal" CODEX_HARD="$codex_hard" \
+    perl -pe 's/\{\{(ROOT|NAME|REPOS|REPO_GUIDE|REPO_SECTIONS|REPO_ROWS|DEV_ROWS|REPO|AGENT|BASES|BASE|DATE|ROOT_GIT|ROOT_VCS|CODEX_TRIVIAL|CODEX_NORMAL|CODEX_HARD)\}\}/$ENV{$1}/g' "$src" >"$dest"
   case "$dest" in *.sh|*.py) chmod +x "$dest" ;; esac
   created+=("${dest#$root/}")
 }
+guide() { # guide <template> <name> <aside>: the root guide, or an aside to merge by hand when one exists
+  if [ -e "$root/$2" ] && grep -q 'Tool mapping' "$root/$2"; then
+    skipped+=("$2 (already the orchestrator's)")
+  elif [ -e "$root/$2" ]; then
+    render "$1" "$root/$3" || true
+    echo "note: $2 exists; merge $3 into it by hand"
+  else
+    render "$1" "$root/$2" || true
+  fi
+}
 
-# CLAUDE.md: never merged automatically.
-if [ -e "$root/CLAUDE.md" ]; then
-  render "$tpl/CLAUDE.md" "$root/.claude/CLAUDE.orchestrator.md"
-  echo "note: CLAUDE.md exists; merge .claude/CLAUDE.orchestrator.md into it by hand"
-else
-  render "$tpl/CLAUDE.md" "$root/CLAUDE.md"
-fi
-[ "$root_git" = yes ] && render "$tpl/gitignore" "$root/.gitignore"
-for f in "$tpl"/memory/*.md; do render "$f" "$root/memory/$(basename "$f")"; done
-render "$tpl/claude/settings.json" "$root/.claude/settings.json"
-render "$tpl/claude/orchestrator.conf" "$root/.claude/orchestrator.conf"
-for s in sync-memory design-patterns software-principles; do
-  render "$tpl/claude/skills/$s/SKILL.md" "$root/.claude/skills/$s/SKILL.md"
+# Shared layer.
+guide "$tpl/AGENTS.md" AGENTS.md .orchestrator/AGENTS.orchestrator.md
+if [ "$root_git" = yes ]; then render "$tpl/gitignore" "$root/.gitignore" || true; fi
+render "$tpl/gitattributes" "$root/.gitattributes" || true
+for f in "$tpl"/memory/*.md; do render "$f" "$root/memory/$(basename "$f")" || true; done
+render "$tpl/orchestrator/orchestrator.conf" "$root/.orchestrator/orchestrator.conf" || true
+render "$tpl/orchestrator/pre-pr-checklist.md" "$root/.orchestrator/pre-pr-checklist.md" || true
+for f in "$tpl"/orchestrator/scripts/* "$tpl"/orchestrator/hooks/*; do
+  rel=${f#$tpl/orchestrator/}; render "$f" "$root/.orchestrator/$rel" || true
 done
-render "$tpl/claude/scripts/memory-state.sh" "$root/.claude/scripts/memory-state.sh"
-render "$tpl/claude/scripts/memory-check.py" "$root/.claude/scripts/memory-check.py"
-# Pre-PR gate (checklist, stamp, push, review workflow) and the SessionStart decision index.
-render "$tpl/claude/pre-pr-checklist.md" "$root/.claude/pre-pr-checklist.md"
-render "$tpl/claude/scripts/pre-pr-pass.sh" "$root/.claude/scripts/pre-pr-pass.sh"
-render "$tpl/claude/scripts/push-pr.sh" "$root/.claude/scripts/push-pr.sh"
-render "$tpl/claude/workflows/pre-pr-review.js" "$root/.claude/workflows/pre-pr-review.js"
-render "$tpl/claude/hooks/decision-index.sh" "$root/.claude/hooks/decision-index.sh"
+for d in "$tpl"/skills/*/; do s=$(basename "$d"); render "$d/SKILL.md" "$root/.agents/skills/$s/SKILL.md" || true; done
+
+# Agents: rendered once as Claude Code definitions, the source the Codex ones are generated from.
+agent_src="$root/.claude/agents"
+if ! has claude; then agent_src=$(mktemp -d); fi
 if [ -L "$root/.claude/agents" ]; then
   skipped+=(".claude/agents (symlink, left as is)")
 else
-  render "$tpl/claude/agents/explorer.md" "$root/.claude/agents/explorer.md"
-  render "$tpl/claude/agents/architect.md" "$root/.claude/agents/architect.md"
-  for r in "${repos[@]}"; do
-    agent=$(agent_of "$r")
-    render "$tpl/claude/agents/developer.md" "$root/.claude/agents/$agent.md" "$r"
+  render "$tpl/agents/explorer.md" "$agent_src/explorer.md" || true
+  render "$tpl/agents/architect.md" "$agent_src/architect.md" || true
+  for r in "${repos[@]}"; do render "$tpl/agents/developer.md" "$agent_src/$(agent_of "$r").md" "$r" || true; done
+fi
+
+if has claude; then
+  guide "$tpl/CLAUDE.md" CLAUDE.md .claude/CLAUDE.orchestrator.md
+  render "$tpl/claude/settings.json" "$root/.claude/settings.json" || true
+  render "$tpl/claude/workflows/pre-pr-review.js" "$root/.claude/workflows/pre-pr-review.js" || true
+  copied=$(bash "$root/.orchestrator/scripts/sync-skills.sh")
+  [ -z "$copied" ] || created+=(".claude/skills/ (copies of .agents/skills/)")
+fi
+if has codex; then
+  render "$tpl/codex/config.toml" "$root/.codex/config.toml" || true
+  render "$tpl/codex/hooks.json" "$root/.codex/hooks.json" || true
+  for md in "$agent_src"/*.md; do
+    [ -e "$md" ] || continue
+    out="$root/.codex/agents/$(basename "${md%.md}").toml"
+    if [ -e "$out" ]; then skipped+=("${out#$root/}"); continue; fi
+    mkdir -p "$(dirname "$out")"; $py "$here/scripts/agent-to-codex.py" "$md" "$out" "$codex_trivial"; created+=("${out#$root/}")
   done
 fi
+has claude || rm -rf "$agent_src"
 
 # The root versions only the orchestration layer: ignore each subrepo.
 if [ "$root_git" = no ]; then
   # Single-repo mode: keep the unversioned layer out of the repo's status, locally only.
   if [ "$repo_list" = "." ] && [ -d "$root/.git" ]; then
     ex="$root/.git/info/exclude"; mkdir -p "$(dirname "$ex")"; touch "$ex"
-    for f in "${created[@]+"${created[@]}"}"; do grep -qxF "/$f" "$ex" || echo "/$f" >>"$ex"; done
+    for f in "${created[@]+"${created[@]}"}"; do grep -qxF "/${f%% *}" "$ex" || echo "/${f%% *}" >>"$ex"; done
     echo "excluded the new orchestration files in .git/info/exclude"
   fi
 elif [ "$repo_list" != "." ] && [ -f "$root/.gitignore" ]; then
@@ -139,8 +176,10 @@ elif [ "$repo_list" != "." ] && [ -f "$root/.gitignore" ]; then
   [ -d "$root/.git" ] || { git -C "$root" init -q && echo "git init at $root"; }
 fi
 
+echo "tools: $tools"
 echo "repos: $repo_list"
 echo "base branches: $bases"
+has codex && echo "codex models: trivial=$codex_trivial normal=$codex_normal hard=$codex_hard"
 for f in "${created[@]+"${created[@]}"}"; do echo "create $f"; done
 for f in "${skipped[@]+"${skipped[@]}"}"; do echo "skip   $f"; done
-echo "next: replace every TODO(orchestrator-setup) marker (grep -rn 'TODO(orchestrator-setup)' $root/CLAUDE.md $root/.claude)"
+echo "next: replace every TODO(orchestrator-setup) marker (grep -rn 'TODO(orchestrator-setup)' AGENTS.md .orchestrator .agents .claude .codex)"

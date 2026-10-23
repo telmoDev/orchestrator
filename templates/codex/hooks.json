@@ -1,0 +1,25 @@
+{
+  "description": "Orchestrator: load the session memory and the decision index at start (Claude Code does both from CLAUDE.md and .claude/settings.json).",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .orchestrator/hooks/session-memory.sh",
+            "statusMessage": "Loading the session memory",
+            "timeout": 10,
+            "additionalContextLimit": 6000
+          },
+          {
+            "type": "command",
+            "command": "bash .orchestrator/hooks/decision-index.sh",
+            "statusMessage": "Loading the decision index",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

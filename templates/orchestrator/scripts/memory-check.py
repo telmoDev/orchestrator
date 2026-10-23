@@ -7,7 +7,7 @@ missing from the In flight table; a commit hash in In flight; a "done" entry in 
 DECISIONS entry with no Until line, or whose Until PR is merged/closed or whose Until date is past;
 anything that looks like a secret or an email address; the four files over the word budget.
 Warns on: PR checks skipped (no gh or no remote).
-Repos come from .claude/orchestrator.conf.
+Repos come from .orchestrator/orchestrator.conf.
 """
 import datetime
 import json
@@ -17,14 +17,14 @@ import shutil
 import subprocess
 import sys
 
-ROOT = os.environ.get("CLAUDE_PROJECT_DIR") or os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 MEM = os.path.join(ROOT, "memory")
 FILES = ["PROJECT_STATE.md", "PROGRESS.md", "DECISIONS.md", "NEXT_STEPS.md"]
 
 
 def conf():
     values = {}
-    with open(os.path.join(ROOT, ".claude", "orchestrator.conf")) as fh:
+    with open(os.path.join(ROOT, ".orchestrator", "orchestrator.conf")) as fh:
         for line in fh:
             m = re.match(r'\s*([A-Z_]+)=["\']?(.*?)["\']?\s*$', line)
             if m:
@@ -160,7 +160,7 @@ for entry in re.split(r"^(?=## )", prose(text.get("DECISIONS.md", "")), flags=re
     title = entry.splitlines()[0][3:73]
     until = re.search(r"^Until:\s*(.+)$", entry, re.M | re.I)
     if not until:
-        errors.append(f"DECISIONS.md '{title}': no 'Until:' line. A lasting rule goes to CLAUDE.md › Workspace rules")
+        errors.append(f"DECISIONS.md '{title}': no 'Until:' line. A lasting rule goes to AGENTS.md › Workspace rules")
         continue
     u = until.group(1)
     for d in re.findall(r"\b\d{4}-\d{2}-\d{2}\b", u):

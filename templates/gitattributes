@@ -1,0 +1,9 @@
+# Scripts run under bash and python on macOS, Linux and Windows (Git Bash): keep them LF everywhere,
+# or Git for Windows' autocrlf turns them into CRLF and bash fails on the first line.
+*.sh   text eol=lf
+*.py   text eol=lf
+*.js   text eol=lf
+*.json text eol=lf
+*.toml text eol=lf
+*.md   text eol=lf
+*.conf text eol=lf

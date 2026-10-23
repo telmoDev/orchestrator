@@ -1,6 +1,6 @@
 # Next steps
 
-Rewritten by `/sync-memory`. Ordered by priority. Verify against git before acting. Worktree and branch cleanup is generated in `PROJECT_STATE.md` › *Cleanup*: don't list it here.
+Rewritten by `sync-memory`. Ordered by priority. Verify against git before acting. Worktree and branch cleanup is generated in `PROJECT_STATE.md` › *Cleanup*: don't list it here.
 
 ## Resume
 - none

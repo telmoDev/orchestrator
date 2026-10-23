@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PROJECT_DIR:-$PWD}/.claude/hooks/decision-index.sh\"",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-$PWD}/.orchestrator/hooks/decision-index.sh\"",
             "timeout": 10,
             "statusMessage": "Loading the decision index",
             "shell": "bash"

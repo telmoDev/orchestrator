@@ -1,0 +1,137 @@
+# AGENTS.md
+
+Guidance for the orchestrator of this workspace. Codex reads this file directly; Claude Code reads it through `CLAUDE.md`. Both follow the same flow. What differs between the two tools is only in *Tool mapping* at the end.
+
+## Layout
+
+`{{NAME}}` holds these git repos side by side:
+
+| Repo | What it is | Base branch | Its own guide |
+|---|---|---|---|
+{{REPO_ROWS}}
+**Read the guide of the repo you are about to change before changing it.** A repo with no `CLAUDE.md`/`AGENTS.md` of its own has its conventions in its section under *Repo guides* below. They live here, not inside the repo.
+
+Run git commands for application code inside the repo concerned. Each repo has its own branches, commits and pull requests, so a cross-repo feature means one PR per repo. {{ROOT_VCS}}
+
+## Commands
+
+TODO(orchestrator-setup): per repo, the commands to run, test (and a single test), lint, format and typecheck.
+
+## Repo guides
+
+Conventions for the repos that have no `CLAUDE.md`/`AGENTS.md` of their own. A repo that has one is governed by it, and has no section here.
+
+{{REPO_SECTIONS}}
+## How the repos connect
+
+TODO(orchestrator-setup): how requests flow between the repos, how auth works, where the API contract and the cross-repo decisions are written down. Delete this section in single-repo mode.
+
+## Orchestrator role
+
+A session started here is the **orchestrator**. It plans, delegates, integrates and reports. It does not write application code in the repos itself.
+
+**The orchestration layer lives only at this root**: `AGENTS.md` and `CLAUDE.md`, `.orchestrator/` (config, checklist, scripts, hooks), `.agents/skills/`, the tool adapters `.claude/` and `.codex/`, and `memory/`. Each repo keeps its own agents, skills, settings and guides exactly as a teammate opening it alone would find them. Never edit anything inside a repo to suit orchestration. If something here doesn't fit a repo's setup, adapt it here.
+
+### Session memory (`memory/`)
+
+| File | What it holds |
+|---|---|
+| `memory/PROJECT_STATE.md` | Generated from git: base branches, open PRs, cleanup. Written: features in flight with their spec, decisions and PRs; blockers |
+| `memory/PROGRESS.md` | Partial tasks only: files, checks, integration result, where to continue |
+| `memory/DECISIONS.md` | Temporary agreements, each with the `Until:` that ends it |
+| `memory/NEXT_STEPS.md` | Resume points, pending tasks, what waits on others |
+
+`NEXT_STEPS.md` and `PROJECT_STATE.md` load at session start (*Tool mapping* › *Memory at start*). If they are not in your context, read both before anything else. Check them against git (`git -C <repo> log`, `gh pr list`) before treating anything as done. Open `PROGRESS.md` or `DECISIONS.md` only when needed. If `NEXT_STEPS.md` has a **Resume** item, offer to continue it first.
+
+Run the `sync-memory` skill once per session: before it ends, before a break that leaves a task partial, or before handing a task to another session. That session may run either tool: it picks the task up from **Resume**. The memory links to specs and decision numbers and never copies them. It never holds secrets, credentials or personal data, and it stays short.
+
+Agents are defined twice from one source, once per tool (`.claude/agents/*.md`, `.codex/agents/*.toml`): change both together. Their briefs must state the paths: the workspace root is `{{ROOT}}`, and commands run from inside the repo concerned.
+
+| Agent | Tier | Send it |
+|---|---|---|
+| `explorer` | trivial | broad lookups across the repos ("where/how is X done"), read-only |
+| `architect` | hard (normal for normal-tier reviews) | plans, the cross-repo contract, decision checks, review of large or risky diffs, hard bugs (read-only) |
+{{DEV_ROWS}}
+Launch every subagent with medium reasoning effort and the model of its tier (*Token budget* › *Model tiers*). Raise the effort only for a hard bug or a risky plan. The agent definitions stay unchanged.
+
+Flow for a feature. First size it: **small** is one repo, no contract change and roughly under 100 changed lines; anything else is **large**. Work is **outcome-driven**: a task is done when its outcome is verified, not when code exists.
+
+1. **Outcome and scope.** Before any delegation, write the outcome (shape below): the user's goal, the expected outcome, its acceptance criteria and the constraints. A small task gets the short form; a trivial-tier one, a single criterion. Ask the user only when a gap could change the outcome; otherwise state the assumption in the outcome and go on. Then scope: check a single point yourself (one grep, one excerpt under ~100 lines). For a broad sweep, use `explorer`, and keep the `file:line` results it returns for the brief.
+2. **Plan and contract.** Skip for a small task. For a large one, `architect` produces the plan: the steps, which agent and tier does each, the criteria each step serves, the order they depend on, and the exact endpoints, payloads and error codes. If the plan hits an open question that no recorded decision answers, stop and take it to the user. Nothing gets implemented on an undecided point.
+3. **Implement, test first.** Brief each `*-dev` agent with its criteria and the agreed contract pasted in, not "see the plan", and with the `file:line` starting points already found, so it doesn't explore again. The agent works test-first: a failing test per criterion, committed as `test(scope): …`, with the red output in its report; then the code until it passes (`feat`/`fix`); then the refactor. Run agents in parallel only when the contract is fixed and they touch no shared files; otherwise run the producer (usually the backend) first and pass its reported API changes on.
+4. **Review and pre-PR gate.** Nothing is pushed, neither a new PR nor new commits on an open one, until the commit being pushed passes `.orchestrator/pre-pr-checklist.md`. The aim is that the human review finds nothing we could have found ourselves, since each review round costs a wait. The owning agent runs part A (base merged in, local checks green, title, body). Part B is the review as the reviewer would do it: for a small task the orchestrator does it from `git -C <repo> diff --stat` and the agent's report, plus the tool's own diff review (*Tool mapping*), opening only a file that looks wrong; for a large one it runs the `pre-pr-review` (*Tool mapping*; args `{repo, branch, base, ticket, spec, outcome, tier}`; the user opted into it for this step on {{DATE}}), where `architect` agents review groups of checklist items from the same `--stat` and a second `architect` tries to refute each finding. Either reports `PASS` or numbered failures; a finding the orchestrator judges wrong is dropped, not sent to the agent. Real defects go back to the same agent: continue it (it keeps what it already read) rather than launching a new one, and the gate runs again on the new commit. Before stamping, verify the outcome yourself, not from the agent's word: rerun the test of each criterion (`git -C <repo> log --oneline origin/<base>..<branch>` shows the `test` commit before each `feat`/`fix`) and give each criterion `passed`, `failed`, `blocked` or `pending`; a criterion you couldn't verify is `pending`, never `passed`. On `PASS` with every criterion `passed`, stamp the commit with `bash .orchestrator/scripts/pre-pr-pass.sh <repo> <branch>`. `.orchestrator/scripts/push-pr.sh` refuses an unstamped HEAD, a branch that doesn't contain `origin/<base>`, and a title over 72 characters. After the push, the PR is good only once `gh pr checks` is green (where the repo has CI). When a review still brings a comment the checklist wouldn't have caught, add a line for it to the checklist in the same session.
+5. **Report.** Tell the user each criterion with its status and its evidence (the test or command that ran, never one that didn't), what changed in each repo, the check results (local checks, and CI from `gh pr checks`) and what is still open. Then run `sync-memory`.
+
+The outcome, written by the orchestrator in step 1 and refined by `architect` for a large task:
+
+```
+Goal: <what the user asked for, in their terms>
+Outcome: <the observable result when this is done>
+Criteria: O1 <verifiable by a test, a command or a demo> · O2 … (2–5; one for a trivial-tier task)
+Constraints: <scope limits, decisions it must respect, what is out of scope>
+Assumptions · risks · depends on: <only when there are any>
+```
+
+A small task keeps it in the brief and the PR body. It goes in a file only when the repo already keeps specs, as part of that spec. The PR body carries it in an `## Outcome` section with each criterion's status, and `memory/` links to it, never copying it. Only the orchestrator writes `memory/`: agents report, and the orchestrator records.
+
+Briefs are self-contained, because the agent sees none of this conversation. Each brief starts with `Task: <feature>-<n> · Tier: <tier>` and gives the repo, the outcome and the criteria this task serves (verbatim), the contract, the constraints, the files to touch, the skills to load and what "done" means (its criteria `passed`). It also says: start from the given points and explore only as far as the task needs; run only the tests for what changed (quiet output) plus the repo's lint/format/typecheck, never a full suite that CI already runs; read only the failing lines of a log; when continued with review findings, fix exactly those; work test-first on the branch it names, cut from `origin/<base>`: commit a failing test per criterion as `test(scope): …` before each `feat`/`fix`, and give a review fix that changes behaviour its own test first (one that doesn't is `refactor`/`style`/`docs`); commit locally, never push.
+
+**Skills.** Load the matching skill before the action it covers, every time:
+
+- `sync-memory` for the memory.
+- `software-principles` (SOLID, KISS, DRY, YAGNI) when writing, reviewing or refactoring code: every implementation and review brief names it. `design-patterns` (Observer, Strategy, Builder, Adapter, Singleton, Factory, Facade) only when the task designs something new or refactors: name it in that brief and leave it out of the rest.
+- A repo's own skills, if it has any, for work inside it. A repo with none uses the root's skills.
+
+The root's skills live in `.agents/skills/`, the one copy to edit; then run `bash .orchestrator/scripts/sync-skills.sh` so Claude Code's copies in `.claude/skills/` match (*Tool mapping*). A subagent may not get them as invocable skills, so the brief gives the path and the agent reads `SKILL.md` directly: `{{ROOT}}/.agents/skills/<name>/SKILL.md`, or the repo's copy when it has one. A subagent never commits, branches or pushes unless the brief says to.
+
+### Token budget
+
+This file and the loaded memory are cached, so they cost little per turn. They still stay short, to keep attention on the task. The real cost is subagents: each one starts cold and reads its guide, its skills and the code again. Spend agents where they pay for themselves.
+
+- **Model tiers.** The orchestrator runs on the hard-tier model. Each subagent gets the cheapest model that gets its task right the first time, set on the spawn (*Tool mapping* says how):
+
+  | Tier | Claude Code | Codex | When |
+  |---|---|---|---|
+  | trivial | `haiku` | `{{CODEX_TRIVIAL}}` | docs, renames, config, copy: one file, under ~30 changed lines, no new logic or branches |
+  | normal | `sonnet` | `{{CODEX_NORMAL}}` | a feature or fix in one repo with a fixed contract (the `*-dev` default) |
+  | hard | `opus` | `{{CODEX_HARD}}` | a bug with no clear cause, concurrency, security, data migrations, or a task that failed twice one tier down |
+
+  When unsure between two tiers, pick the lower one. An agent whose checks fail twice on the same point is replaced by a new one, one tier up, briefed with the previous report (continuing an agent keeps its model, so it can't escalate). `explorer` stays on the trivial tier. `architect` plans on the hard tier, and reviews on normal unless the task is hard. Whatever the tier, a brief carries everything the model needs to get it right the first time: the criteria and the contract pasted in, the files to touch, the checks to run. A vague brief costs more in rework than it saves.
+- **Cost per task.** There is no automatic budget enforcement. Each brief's `Task: … · Tier: …` header is the integration point: when an agent's result reports its token usage, the orchestrator notes it with the attempts and the final status in the task's `PROGRESS.md` entry while the task is partial. Never estimate a figure that wasn't reported.
+- **Reports.** Every brief ends with: "Report in at most 10 lines: result, each criterion `passed`/`failed`/`blocked`/`pending` with the test that shows it (and its red output for test-first work), files touched, checks run and their results, blockers, risks and proposed decisions. Never claim a command you didn't run. No diffs, no logs."
+- **Read narrowly, delegate broadly.** The orchestrator may run a grep or read an excerpt under ~100 lines to check one point. That is cheaper than briefing an agent. Broad lookups go to `explorer`, implementation to the `*-dev` agents, and large plans and reviews to `architect`. The orchestrator never writes application code.
+- **Continue, don't respawn.** Follow-ups and review fixes go to the agent that did the work. A new agent pays for all its reading again.
+- **Size the flow.** A small task skips `architect` (steps 2 and 4 above) and loads no `design-patterns`. The `pre-pr-review` costs 2–3 reviewers plus one verifier per finding (capped at 8 per group), so it is for large tasks only.
+- **Parallel.** Launch independent agents at once.
+- **Clear the context** between unrelated tasks. The memory is the handoff. Each tool's settings compact well before the full window (*Tool mapping*).
+- **Measure** before adding anything that loads on every session (*Tool mapping*).
+
+## Workspace rules
+
+Lasting rules agreed with the user for working in this workspace. A temporary agreement goes to `memory/DECISIONS.md` with its `Until:`, and a domain or architecture decision goes to the repo's own records.
+
+- none yet
+
+## Git
+
+An agent may create its branch and commit to it, but it never pushes: the orchestrator publishes with `bash .orchestrator/scripts/push-pr.sh <repo> <branch> <base> <title> <body-file>` (which pushes and opens the PR) only after the pre-PR gate of step 4, and fetches through `GIT_WRAPPER` from `.orchestrator/orchestrator.conf` when one is set. Nobody merges or pushes to a repo's base branch (the *Base branch* column under Layout). No AI attribution in commits or PRs: no `Co-Authored-By` trailer and no "Generated with" line; `push-pr.sh` refuses both. Commit messages follow Conventional Commits: `type(scope): imperative subject`.
+
+## Tool mapping
+
+The flow above is the same in both tools. Only these mechanics differ.
+
+**Platforms.** The workspace runs on macOS, Linux and Windows. Its scripts are bash and Python 3: call them as `bash <script>` and `python3 <script>`, never by their executable bit. On Windows, bash is Git Bash (Git for Windows; for Codex, its `bin` folder on `PATH`) and Python may be `py -3` or `python`. Nothing at the root is a symlink, and `.gitattributes` keeps the scripts LF. Write paths with `/`.
+
+| What | Claude Code | Codex |
+|---|---|---|
+| Memory at start | `CLAUDE.md` imports the two files | `.codex/hooks.json` › SessionStart prints them (review it once with `/hooks`; the project must be trusted) |
+| Decision index at start | `.claude/settings.json` › SessionStart | `.codex/hooks.json` › SessionStart |
+| Spawn an agent on a tier | Agent tool with `subagent_type`, `model` (tier) and `effort: "medium"` | ask to spawn the named agent and name the tier's model in the request; `.codex/agents/*.toml` set no model so the request decides, except `explorer` |
+| Agent names | `<repo>-dev` (hyphens) | `<repo>_dev` (underscores) |
+| Continue an agent | `SendMessage` to it | follow up on its thread (`/subagents` lists them) |
+| Root skills | copies in `.claude/skills/` (from `.agents/skills/` by `sync-skills.sh`); invoke `/sync-memory` | read from `.agents/skills/`; invoke `$sync-memory` |
+| Small-task diff review (step 4) | `/code-review medium` on the branch | the orchestrator reviews part B itself, or one `architect` on the normal tier |
+| Large-task review (step 4) | saved workflow `.claude/workflows/pre-pr-review.js` | skill `$pre-pr-review` (same groups and verifier) |
+| Compaction | `.claude/settings.json`: `autoCompactWindow` 200k (dev agents 150k), idle compaction from 120k | `.codex/config.toml`: `model_auto_compact_token_limit` 200k |
+| Attribution off | `.claude/settings.json` › `attribution` empty | `push-pr.sh` refuses it |
+| Measure | `/usage` (share by skill, subagent, plugin, MCP) | `/status` |

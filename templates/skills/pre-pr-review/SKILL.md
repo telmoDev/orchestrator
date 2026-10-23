@@ -1,0 +1,52 @@
+---
+name: pre-pr-review
+description: Part B of the pre-PR gate for a large task (AGENTS.md flow step 4), for tools without the saved workflow (Codex): architect subagents review the branch against groups of checklist items, then one architect per finding tries to refute it. Use once the owning agent reports part A green. Claude Code runs .claude/workflows/pre-pr-review.js instead.
+---
+
+# Pre-PR review (part B, large tasks)
+
+The same review as `.claude/workflows/pre-pr-review.js`, run by hand with subagents. Keep the two in step:
+the groups below match the workflow's `GROUPS`, and both follow the item numbers of
+`{{ROOT}}/.orchestrator/pre-pr-checklist.md`.
+
+Inputs: `repo`, `branch`, `base` (default `main`), `ticket`, `spec`, `outcome` (the outcome block),
+`tier` (`trivial`, `normal` or `hard`; default `hard`).
+
+## 1. Context for every subagent
+
+Paste this into each brief, filled in:
+
+```
+Workspace root: {{ROOT}}. Repo: {{ROOT}}/<repo>. Branch: <branch>, base origin/<base>. Ticket: <ticket>.
+Spec the diff implements: <spec>  (none given: find the spec and the decisions the diff cites; AGENTS.md says where they live)
+Outcome the diff must meet: <outcome>  (none given: report item 15 as failed)
+The checklist is {{ROOT}}/.orchestrator/pre-pr-checklist.md. Start from
+`git -C {{ROOT}}/<repo> diff --stat origin/<base>...<branch>`, then open only the files that carry risk for your items.
+Read-only: never edit, commit, branch or push. Review as the human reviewer would: report only defects that
+break a checklist item, not style preferences.
+```
+
+## 2. Review: one `architect` per group, in parallel
+
+Model: the normal tier unless `tier` is `hard`, then the hard tier (AGENTS.md › *Model tiers*); medium effort.
+
+| Group | Checklist items |
+|---|---|
+| contract | 5, 6, 7, 13 and 15 (contract line by line, no interim persisted answers, docs move with the code, decision records whole, outcome met) |
+| rules | 8, 9, 10, 11, 12 and 16 (repo rules and skills, module boundaries, failure paths, tests per branch, no third copy, test first) |
+| ui | 14 (UI states and races, i18n, design system), only when `<repo>` is in `UI_REPOS` in `.orchestrator/orchestrator.conf` |
+
+Ask each: "Check checklist items <items> against this branch's diff. Return every failure as one line
+`item · file:line · what is wrong and what the rule or spec says`, or `none`."
+
+## 3. Verify: one `architect` on the normal tier per finding, in parallel
+
+At most 8 per group; report the rest as unverified. Ask each: "A reviewer claims this branch fails checklist
+item <item>: <file>:<line>: <summary>. Try to refute it: read the code and the spec or rule it cites. Answer
+`refuted` if the claim is wrong, already handled, or not what the item asks, else `stands`, with one line why.
+If uncertain, `stands`."
+
+## 4. Result
+
+Keep the findings that stand (and the unverified ones, marked). None: `PASS`. Otherwise `FAIL` with the
+numbered list. Hand the result back to AGENTS.md flow step 4; this skill never stamps or pushes.
