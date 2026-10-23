@@ -143,6 +143,7 @@ fi
 if [ -f "$root/.gitignore" ] && ! grep -qxF '.orchestrator/tmp/' "$root/.gitignore"; then
   printf '%s\n' '.orchestrator/tmp/' >> "$root/.gitignore"; done_+=(".gitignore: .orchestrator/tmp/")
 fi
+if [ -f "$root/.gitignore" ] && ! grep -qxF '__pycache__/' "$root/.gitignore"; then printf '%s\n' '__pycache__/' >> "$root/.gitignore"; fi
 
 for l in "${done_[@]}"; do echo "done   $l"; done
 left=$(cd "$root" && grep -rlE '(^|[^\w./-])\.claude/(scripts|hooks|tmp|briefs|orchestrator\.conf|pre-pr-checklist\.md)' AGENTS.md .orchestrator .agents memory 2>/dev/null | grep -v '^\.orchestrator/tmp/' || true)

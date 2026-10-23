@@ -6,3 +6,4 @@
 .orchestrator/tmp/
 .env
 .env.*
+__pycache__/
