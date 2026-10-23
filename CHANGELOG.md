@@ -11,6 +11,8 @@ into the new version's section.
 
 ## Unreleased
 
+## v0.1.0 — 2026-10-23
+
 First release. The skill, until now kept in `~/.claude/skills/orchestrator-setup`, is shared by Claude
 Code and Codex and runs on macOS, Linux and Windows.
 
