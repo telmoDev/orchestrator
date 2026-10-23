@@ -11,6 +11,8 @@ into the new version's section.
 
 ## Unreleased
 
+## v0.5.0 — 2026-10-23
+
 - Standards that agents actually apply: transcripts showed dev agents told to "read software-principles"
   never opened it. The `architect` and `*-dev` definitions now carry a short *Standards digest*; the full
   skills are opened for plans and design reviews, and agents report which skills they read.
