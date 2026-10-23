@@ -30,9 +30,14 @@ into the new version's section.
   `.claude/settings.json` no longer empties attribution.
 - `pre-pr-pass.sh` tells test commits from code commits with `TDD_TEST_COMMIT` and `TDD_CODE_COMMIT`
   (defaults: Conventional Commits) instead of hard-coded `test`/`feat`/`fix`.
-- The checklist has three parts: A mechanical (1–4), B the flow's review (5–8), C quality (9–16, the
+- The checklist has three parts: A mechanical (1–5), B the flow's review (6–9), C quality (10–17, the
   defaults the user adapts, where lines from reviews also go). The review workflow and skill group by part,
   so `UI_REPOS` is gone: the UI item names the repos it covers.
+- Git and PR defaults, for repos with no convention of their own: Conventional Commits and `<type>/<topic>`
+  branches; one logical change per commit, no secrets, `.env`, build output or local config, no rewriting
+  history pushed for review; one small topic per PR (stacked when large), the repo's PR template, why rather
+  than what, `Closes #N`, a draft while a criterion is `pending`, reviewers from the repo's own rules. New
+  checklist item 3 (clean diff).
 - The guide, agents and checklist speak of contracts, interfaces and data shapes, not endpoints and payloads.
 
 **Workspaces:** copy `templates/orchestrator/scripts/memory-check.py` over `.orchestrator/scripts/memory-check.py`.

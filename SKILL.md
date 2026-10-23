@@ -50,8 +50,10 @@ or `py -3`. It creates no symlinks.
   **Default: keep all.** Their own standards are skills: they go to `.agents/skills/` and get a row in
   *Standards*.
 - Ask whether `push-pr.sh` should enforce the PR title (`TITLE_PATTERN`, `TITLE_MAX`) and refuse AI attribution
-  (`ATTRIBUTION="refuse"`). **Default: match what the history shows**, proposed to the user; nothing enforced
-  when the history shows no convention.
+  (`ATTRIBUTION="refuse"`). **Default: match what the history shows**, proposed to the user. When a repo
+  shows no convention, propose the orchestrator's default (Conventional Commits, titles of at most 72
+  characters, branches `<type>/<topic>`), write it in its section under *Repo guides*, and set
+  `TITLE_PATTERN`/`TITLE_MAX` if the user wants it enforced.
 - Ask whether to version the orchestration layer in git. **Default: yes.** If not, pass `--no-git`.
 - Ask whether the user opts into the `pre-pr-review` for large tasks (2–3 `architect` reviewers plus one
   verifier per finding; a saved workflow in Claude Code, a skill in Codex). **Default: yes.** Claude
@@ -124,7 +126,7 @@ Edit the generated files. Replace every `TODO(orchestrator-setup)` marker:
   PR opens. Set `TICKET_LINE` in `orchestrator.conf` (e.g. `'^Jira: PROJ-[0-9]+'`) so `push-pr.sh`
   enforces it. Without a ticket system, leave the flow as it is. The memory's Ticket column then takes `—`.
 - **Pre-PR gate**: in `.orchestrator/pre-pr-checklist.md` item 2, the exact local checks per repo and
-  what CI runs instead. Drop item 16 if no repo has a user interface; otherwise name the repos it covers in
+  what CI runs instead. Drop item 17 if no repo has a user interface; otherwise name the repos it covers in
   the item. If a repo has CI that runs the full suite, add a *Test suites*
   rule to `AGENTS.md` › *Workspace rules* (locally only the tests for what changed; `gh pr checks` decides).
 - **Review declined** (step 1): in `AGENTS.md` step 4, replace the `pre-pr-review` clause with "for a
