@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Scaffold the orchestrator layer into a workspace root, for Claude Code, Codex or both.
-#   bash scaffold.sh [--no-git] [--tools claude,codex] <workspace-root> [repo ...]
+#   bash scaffold.sh --git|--no-git [--tools claude,codex] <workspace-root> [repo ...]
 # Shared: AGENTS.md, memory/, .orchestrator/ (config, checklist, scripts, hooks), .agents/skills/.
 # Claude Code: CLAUDE.md (imports AGENTS.md), .claude/ (settings, agents, workflow, copies of the skills).
 # Codex: .codex/ (config.toml, hooks.json, agents/*.toml rendered from the same agent sources).
-# --no-git: don't version the orchestration layer (no git init, no .gitignore at the root; in
-#           single-repo mode its files go to .git/info/exclude instead of being committed).
+# --git:    version the orchestration layer (git init at the root when it has subrepos, a root .gitignore).
+# --no-git: don't version it (no git init, no .gitignore at the root; in single-repo mode its files go to
+#           .git/info/exclude instead of being committed). One of the two is required: it is the user's call.
 # Repos default to the immediate subdirectories holding .git; if none, the root itself (".").
 # A repo name with whitespace is refused. Agent names are the repo name slugged (My.API -> my-api-dev).
 # Each repo's base branch (origin/HEAD, else main, else master) goes to BASE_BRANCHES in orchestrator.conf.
@@ -14,17 +15,19 @@
 set -euo pipefail
 here="$(cd "$(dirname "$0")/.." && pwd)"
 tpl="$here/templates"
-root_git=yes tools="claude,codex"
+root_git="" tools="claude,codex"
 while [ $# -gt 0 ]; do
   case "$1" in
+    --git) root_git=yes; shift ;;
     --no-git) root_git=no; shift ;;
     --tools) tools="${2:?--tools needs claude, codex or claude,codex}"; shift 2 ;;
     *) break ;;
   esac
 done
+[ -n "$root_git" ] || { echo "scaffold: pass --git or --no-git: whether to version the orchestration layer is the user's call" >&2; exit 2; }
 case ",$tools," in *,claude,*|*,codex,*) ;; *) echo "scaffold: --tools takes claude, codex or both" >&2; exit 2 ;; esac
 has() { case ",$tools," in *",$1,"*) return 0 ;; *) return 1 ;; esac; }
-root="$(cd "${1:?usage: scaffold.sh [--no-git] [--tools claude,codex] <workspace-root> [repo ...]}" && pwd)"; shift
+root="$(cd "${1:?usage: scaffold.sh --git|--no-git [--tools claude,codex] <workspace-root> [repo ...]}" && pwd)"; shift
 # The path written into the guides: on Windows (Git Bash) the native C:/... form, which every tool understands.
 root_shown=$(cd "$root" && { pwd -W 2>/dev/null || pwd; })
 codex_trivial="${CODEX_TRIVIAL:-gpt-6-luna}" codex_normal="${CODEX_NORMAL:-gpt-6.1-sol}" codex_hard="${CODEX_HARD:-gpt-6-astra}"

@@ -29,7 +29,7 @@ An agent that fails twice is replaced one tier up.
 
 Open your agent at the workspace root and say "implementa la estructura de orquestador" (or "set up the
 orchestrator"). It reads your repos (stack, commands, how you write commits and PR titles), asks which tools
-you use and your ticket system, then shows you its defaults (design principles and patterns, test-first,
+you use, your ticket system and whether to version the orchestration files in git, then shows you its defaults (design principles and patterns, test-first,
 the quality checklist) so you keep, change or drop each one. Then it writes the files and lists what's left
 for you to fill in.
 

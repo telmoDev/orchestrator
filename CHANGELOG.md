@@ -11,6 +11,11 @@ into the new version's section.
 
 ## Unreleased
 
+- Whether to version a workspace's orchestration layer is the user's call: setup always asks, with no
+  default, and `scaffold.sh` refuses to run without `--git` or `--no-git`.
+
+**Workspaces:** nothing.
+
 ## v0.2.0 — 2026-10-23
 
 - `scripts/migrate.sh <workspace>` does the mechanical part of the v0.1.0 migration (moves, path
