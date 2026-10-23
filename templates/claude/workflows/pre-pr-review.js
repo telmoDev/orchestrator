@@ -11,8 +11,6 @@ export const meta = {
 // args: { repo, branch, base = 'main', ticket?: 'KEY-n', spec?: 'paths or sections the diff implements',
 //         outcome?: 'the outcome block (goal, outcome, criteria O1…)', tier?: 'normal' | 'hard' (default: hard) }
 const ROOT = '{{ROOT}}'
-// Repos with a user interface get the UI group (checklist item 14). Keep in step with UI_REPOS in .orchestrator/orchestrator.conf.
-const UI_REPOS = [] // TODO(orchestrator-setup): e.g. ['web']
 const { repo, branch } = args || {}
 const base = (args && args.base) || 'main'
 // Model tiers (AGENTS.md): reviewers run on Sonnet for a normal-tier task, on the architect's Opus for a hard one.
@@ -21,15 +19,16 @@ if (!repo || !branch) throw new Error('args needs repo and branch')
 
 const CONTEXT = `Workspace root: ${ROOT}. Repo: ${ROOT}/${repo}. Branch: ${branch}, base origin/${base}.${args.ticket ? ` Ticket: ${args.ticket}.` : ''}
 ${args.spec ? `Spec the diff implements: ${args.spec}.` : 'Find the spec and the decisions the diff cites (see the repo guide in AGENTS.md for where they live).'}
-${args.outcome ? `Outcome the diff must meet:\n${args.outcome}` : 'The outcome and its criteria are in the PR body draft or the brief; if none is given, report item 15 as failed.'}
+${args.outcome ? `Outcome the diff must meet:\n${args.outcome}` : 'The outcome and its criteria are in the PR body draft or the brief; if none is given, report item 8 as failed.'}
 The checklist is ${ROOT}/.orchestrator/pre-pr-checklist.md. Start from \`git -C ${ROOT}/${repo} diff --stat origin/${base}...${branch}\`, then open only the files that carry risk for your items.
 Read-only: never edit, commit, branch or push. Review as the human reviewer would: report only defects that break a checklist item, not style preferences.`
 
+// The checklist's part B (the flow) and part C (quality, as this workspace adapted it). An item that names the
+// repos it covers applies only to those.
 const GROUPS = [
-  { key: 'contract', items: '5, 6, 7, 13 and 15 (contract line by line, no interim persisted answers, docs move with the code, decision records whole, outcome met)' },
-  { key: 'rules', items: '8, 9, 10, 11, 12 and 16 (repo rules and skills, module boundaries, failure paths, tests per branch, no third copy, test first)' },
+  { key: 'flow', items: 'in part B (contract line by line, repo rules and workspace standards, outcome met, test first when TDD is on)' },
+  { key: 'quality', items: 'in part C, every one of them' },
 ]
-if (UI_REPOS.includes(repo)) GROUPS.push({ key: 'ui', items: '14 (UI states and races, i18n, design system)' })
 
 const FINDINGS = {
   type: 'object',
@@ -64,7 +63,7 @@ const MAX_VERIFY = 8
 
 const results = await pipeline(
   GROUPS,
-  g => agent(`${CONTEXT}\n\nCheck checklist items ${g.items} against this branch's diff. Return every failure, or an empty list.`,
+  g => agent(`${CONTEXT}\n\nCheck the checklist items ${g.items} against this branch's diff. Return every failure, or an empty list.`,
     { label: `review:${g.key}`, phase: 'Review', agentType: 'architect', ...reviewModel, effort: 'medium', schema: FINDINGS }),
   (r, g) => {
     const found = (r && r.findings) || []

@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Push a branch an agent committed locally and open its pull request, in one deterministic step.
 #   .orchestrator/scripts/push-pr.sh <repo> <branch> <base> <title> <body-file> [--draft] [--reviewer <login>]
-# Refuses (AGENTS.md flow step 4, .orchestrator/pre-pr-checklist.md): a push to a base branch, AI attribution in the
-# body or the commits, a body without TICKET_LINE (when orchestrator.conf sets one), a title over 72 characters,
-# a branch that does not contain origin/<base>, and a HEAD the pre-PR gate has not stamped (pre-pr-pass.sh).
+# Refuses (AGENTS.md flow step 4, .orchestrator/pre-pr-checklist.md): a push to a base branch, a branch that does
+# not contain origin/<base>, and a HEAD the pre-PR gate has not stamped (pre-pr-pass.sh). And what orchestrator.conf
+# sets: a body without TICKET_LINE, a title not matching TITLE_PATTERN or over TITLE_MAX characters, and, with
+# ATTRIBUTION="refuse", AI attribution in the body or the commits.
 # Git runs through GIT_WRAPPER when orchestrator.conf sets one. If the branch already has an open PR, it only
 # pushes and prints that PR's URL. It never merges and never force-pushes.
 set -euo pipefail
@@ -28,15 +29,17 @@ for kv in ${BASE_BRANCHES:-}; do [ "${kv%%=*}" = "$repo" ] && [ "${kv#*=}" = "$b
 case "$branch" in main|master) fail "refusing to push $branch" ;; esac
 [ -f "$body" ] || fail "body file not found: $body"
 [ -z "${TICKET_LINE:-}" ] || grep -Eq "$TICKET_LINE" "$body" || fail "body has no line matching $TICKET_LINE"
-grep -Eiq 'co-authored-by|generated with|claude\.ai/code|🤖' "$body" && fail "body carries AI attribution"
+refuse_ai=no; [ "${ATTRIBUTION:-}" = refuse ] && refuse_ai=yes
+[ $refuse_ai = yes ] && grep -Eiq 'co-authored-by|generated with|claude\.ai/code|🤖' "$body" && fail "body carries AI attribution"
 git -C "$root/$repo" rev-parse --verify -q "refs/heads/$branch" >/dev/null || fail "no local branch $branch in $repo"
-[ ${#title} -le 72 ] || fail "title is ${#title} characters, over 72"
+[ -z "${TITLE_MAX:-}" ] || [ ${#title} -le "$TITLE_MAX" ] || fail "title is ${#title} characters, over $TITLE_MAX"
+[ -z "${TITLE_PATTERN:-}" ] || printf '%s\n' "$title" | grep -Eq "$TITLE_PATTERN" || fail "title does not match TITLE_PATTERN ($TITLE_PATTERN)"
 
 rgit fetch -q origin "$base"
-git -C "$root/$repo" log --format=%B "origin/$base..$branch" | grep -Eiq 'co-authored-by|generated with' \
+[ $refuse_ai = yes ] && git -C "$root/$repo" log --format=%B "origin/$base..$branch" | grep -Eiq 'co-authored-by|generated with' \
   && fail "a commit on $branch carries AI attribution"
 git -C "$root/$repo" merge-base --is-ancestor "origin/$base" "$branch" \
-  || fail "$branch does not contain origin/$base: merge the base in (no rebase) and re-run the gate"
+  || fail "$branch does not contain origin/$base: bring the base in and re-run the gate"
 stamp="$root/.orchestrator/tmp/pre-pr/${repo//\//_}--${branch//\//_}"
 head=$(git -C "$root/$repo" rev-parse "refs/heads/$branch")
 [ -f "$stamp" ] && [ "$(cat "$stamp")" = "$head" ] \

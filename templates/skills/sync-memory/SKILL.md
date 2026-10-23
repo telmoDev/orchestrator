@@ -28,7 +28,7 @@ Edit the files directly, with targeted edits. Change only what differs, and keep
 - **`NEXT_STEPS.md`**: Resume = where each partial task continues. Pending = next tasks in order, without the cleanup the generated block already lists. Waiting on others = only what git can't show (decisions, answers, third parties), with their owner.
 - **Something agreed with the user this session**: a lasting rule goes to `AGENTS.md` › *Workspace rules*. A temporary agreement goes to `DECISIONS.md` with an `Until:` (a PR merging, a ticket closing, a question answered, a date). Delete the `DECISIONS.md` entries whose condition has been met.
 
-Use the right name for each thing: a slice is not its feature, and a PR belongs to the feature whose spec it implements. Link specs and decision numbers. Never paste rules, payloads or endpoints from the docs. Never write secrets, credentials or personal data. Use tables and IDs, not prose.
+Use the right name for each thing: a slice is not its feature, and a PR belongs to the feature whose spec it implements. Link specs and decision numbers. Never paste rules or contracts from the docs. Never write secrets, credentials or personal data. Use tables and IDs, not prose.
 
 ## 3. Script: refuse what git contradicts
 
@@ -55,10 +55,10 @@ Fix every failure and rerun until it passes. Don't commit around it.
 Skip this step when `.orchestrator/orchestrator.conf` has `ROOT_GIT="no"`: the memory is not versioned.
 
 ```bash
-git add memory && git commit -m "chore(memory): sync after <task>"
+git add memory && git commit -m "<sync after <task>, in the root's commit convention>"
 ```
 
-Commit at the root only. No AI attribution, no Co-Authored-By. Push only if the user set up a remote for the root and asked for it. Never touch anything inside the app repos.
+Commit at the root only, following *Workspace rules* (attribution included). Push only if the user set up a remote for the root and asked for it. Never touch anything inside the app repos.
 
 ## 5. Report
 
