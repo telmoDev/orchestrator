@@ -1,5 +1,7 @@
 # orchestrator
 
+> **Agents:** if a person gave you this link to install the orchestrator, follow [INSTALL.md](INSTALL.md) step by step.
+
 The `orchestrator-setup` skill. It scaffolds an orchestration layer at the root of a multi-repo workspace,
 for **Claude Code**, **Codex** or both, on **macOS, Linux and Windows**: one shared guide (`AGENTS.md`),
 session memory with `sync-memory`, explorer/architect/developer agents, an outcome-driven flow with
@@ -9,6 +11,7 @@ test-first, model tiers by task size, and a pre-PR gate.
 - `scripts/scaffold.sh`: writes the templates into a workspace.
 - `scripts/agent-to-codex.py`: renders a Claude Code agent as a Codex custom agent.
 - `templates/`: the files it writes.
+- `INSTALL.md`: install steps for an agent; `USAGE.md`: how a person works with the orchestrator.
 
 ## What a workspace gets
 
@@ -25,14 +28,22 @@ test-first, model tiers by task size, and a pre-PR gate.
 
 ## Install
 
+Ask your agent (Claude Code or Codex), in any language:
+
+> Install the orchestrator from https://github.com/telmoDev/orchestrator
+
+It follows [INSTALL.md](INSTALL.md): checks your OS and prerequisites, clones the repo to
+`~/orchestrator-setup`, links the skill into every tool you have (a symlink on macOS and Linux, a junction
+on Windows), verifies it with `bash install.sh --check`, and explains how to work with it
+([USAGE.md](USAGE.md)).
+
+By hand:
+
 ```bash
-git clone https://github.com/telmoDev/orchestrator.git
-cd orchestrator
+git clone https://github.com/telmoDev/orchestrator.git ~/orchestrator-setup
+cd ~/orchestrator-setup
 bash install.sh                 # both tools; or --tools claude / --tools codex
+bash install.sh --check
 ```
 
-It links the checkout as `~/.claude/skills/orchestrator-setup` and `~/.agents/skills/orchestrator-setup`
-(a symlink on macOS and Linux, a directory junction on Windows), so `git pull` updates both.
-`bash install.sh --uninstall` removes the links.
-
-Then, in either tool, ask it to set up the orchestrator ("implementa la estructura de orquestador").
+Update with `git -C ~/orchestrator-setup pull --ff-only`; remove with `bash install.sh --uninstall`.

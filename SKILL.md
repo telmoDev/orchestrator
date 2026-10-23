@@ -146,7 +146,7 @@ It should return nothing.
 3. Unless `--no-git` was used, ask the user before the first commit at the root:
    `git add AGENTS.md CLAUDE.md .orchestrator .agents .claude .codex memory .gitignore .gitattributes && git commit -m "chore(orchestration): set up orchestrator layer"`
    (leave out what the chosen tools didn't create). Never add a remote or push unless the user asks.
-4. Report: files created, files skipped (already present), the TODOs left for the user, and how to start
+4. Report: files created, files skipped (already present), the TODOs left for the user, and how to start (`USAGE.md` in this skill's directory is the person-facing version)
    in each tool. Claude Code: open it at the workspace root; `/sync-memory` once per session; `/usage` to
    see what each skill, agent and plugin costs. Codex: trust the project, open `/hooks` once to approve
    the two SessionStart hooks, then `$sync-memory` once per session and `/status` for usage. In both,
