@@ -9,12 +9,12 @@ export const meta = {
 }
 
 // args: { repo, branch, base = 'main', ticket?: 'KEY-n', spec?: 'paths or sections the diff implements',
-//         outcome?: 'the outcome block (goal, outcome, criteria O1…)', tier?: 'normal' | 'hard' (default: hard) }
+//         outcome?: 'the outcome block (goal, outcome, criteria O1…)', tier?: 'normal' | 'hard' (default: normal) }
 const ROOT = '{{ROOT}}'
 const { repo, branch } = args || {}
 const base = (args && args.base) || 'main'
 // Model tiers (AGENTS.md): reviewers run on Sonnet for a normal-tier task, on the architect's Opus for a hard one.
-const reviewModel = args && args.tier && args.tier !== 'hard' ? { model: 'sonnet' } : {}
+const reviewModel = args && args.tier === 'hard' ? {} : { model: 'sonnet' }
 if (!repo || !branch) throw new Error('args needs repo and branch')
 
 const CONTEXT = `Workspace root: ${ROOT}. Repo: ${ROOT}/${repo}. Branch: ${branch}, base origin/${base}.${args.ticket ? ` Ticket: ${args.ticket}.` : ''}

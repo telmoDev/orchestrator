@@ -11,6 +11,16 @@ into the new version's section.
 
 ## Unreleased
 
+- The `pre-pr-review` defaults to the normal tier, as `AGENTS.md` › *Model tiers* says: without `tier`, its
+  reviewers ran on Opus. Pass `tier: "hard"` for a hard task.
+- `ATTRIBUTION="refuse"` refuses only AI attribution: a `Co-authored-by` naming a person no longer blocks the push.
+- A smoke test (`tests/smoke.sh`), run by CI on macOS, Linux and Windows: it scaffolds a two-repo workspace,
+  runs the checks of `SKILL.md` step 4 and exercises `pre-pr-pass.sh` and `push-pr.sh`.
+
+**Workspaces:** optional. Copy `templates/orchestrator/scripts/push-pr.sh` over `.orchestrator/scripts/push-pr.sh`;
+in `.claude/workflows/pre-pr-review.js` set `reviewModel` as in the template; in
+`.agents/skills/pre-pr-review/SKILL.md` make the `tier` default `normal`.
+
 ## v0.5.0 — 2026-10-23
 
 - Standards that agents actually apply: transcripts showed dev agents told to "read software-principles"
