@@ -11,6 +11,8 @@ into the new version's section.
 
 ## Unreleased
 
+## v0.5.1 — 2026-10-24
+
 - The `pre-pr-review` defaults to the normal tier, as `AGENTS.md` › *Model tiers* says: without `tier`, its
   reviewers ran on Opus. Pass `tier: "hard"` for a hard task.
 - `ATTRIBUTION="refuse"` refuses only AI attribution: a `Co-authored-by` naming a person no longer blocks the push.
