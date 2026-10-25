@@ -11,6 +11,8 @@ into the new version's section.
 
 ## Unreleased
 
+## v0.6.0 — 2026-10-24
+
 - Setup asks in one message: what it found and a table of every choice with its default filled in from the
   repos, instead of a dozen questions one by one. Versioning still has no default and is always asked.
 - `AGENTS.md` flow step 4 (review and pre-PR gate), one ~350-word paragraph, is split into short bullets: part A,
