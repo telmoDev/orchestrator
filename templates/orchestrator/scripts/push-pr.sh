@@ -30,13 +30,16 @@ case "$branch" in main|master) fail "refusing to push $branch" ;; esac
 [ -f "$body" ] || fail "body file not found: $body"
 [ -z "${TICKET_LINE:-}" ] || grep -Eq "$TICKET_LINE" "$body" || fail "body has no line matching $TICKET_LINE"
 refuse_ai=no; [ "${ATTRIBUTION:-}" = refuse ] && refuse_ai=yes
-[ $refuse_ai = yes ] && grep -Eiq 'co-authored-by|generated with|claude\.ai/code|🤖' "$body" && fail "body carries AI attribution"
+# AI attribution only: a Co-authored-by trailer naming a person is fine.
+ai='(claude|codex|copilot|cursor|gemini|chatgpt|openai|anthropic)'
+ai_re="co-authored-by:.*$ai|generated (with|by) \\[?$ai|claude\\.ai/code|🤖"
+[ $refuse_ai = yes ] && grep -Eiq "$ai_re" "$body" && fail "body carries AI attribution"
 git -C "$root/$repo" rev-parse --verify -q "refs/heads/$branch" >/dev/null || fail "no local branch $branch in $repo"
 [ -z "${TITLE_MAX:-}" ] || [ ${#title} -le "$TITLE_MAX" ] || fail "title is ${#title} characters, over $TITLE_MAX"
 [ -z "${TITLE_PATTERN:-}" ] || printf '%s\n' "$title" | grep -Eq "$TITLE_PATTERN" || fail "title does not match TITLE_PATTERN ($TITLE_PATTERN)"
 
 rgit fetch -q origin "$base"
-[ $refuse_ai = yes ] && git -C "$root/$repo" log --format=%B "origin/$base..$branch" | grep -Eiq 'co-authored-by|generated with' \
+[ $refuse_ai = yes ] && git -C "$root/$repo" log --format=%B "origin/$base..$branch" | grep -Eiq "$ai_re" \
   && fail "a commit on $branch carries AI attribution"
 git -C "$root/$repo" merge-base --is-ancestor "origin/$base" "$branch" \
   || fail "$branch does not contain origin/$base: bring the base in and re-run the gate"

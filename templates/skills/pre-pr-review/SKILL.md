@@ -10,7 +10,7 @@ the groups below match the workflow's `GROUPS`, and both follow the item numbers
 `{{ROOT}}/.orchestrator/pre-pr-checklist.md`.
 
 Inputs: `repo`, `branch`, `base` (default `main`), `ticket`, `spec`, `outcome` (the outcome block),
-`tier` (`trivial`, `normal` or `hard`; default `hard`).
+`tier` (`trivial`, `normal` or `hard`; default `normal`).
 
 ## 1. Context for every subagent
 
