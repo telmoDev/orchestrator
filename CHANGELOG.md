@@ -11,6 +11,17 @@ into the new version's section.
 
 ## Unreleased
 
+- Setup asks in one message: what it found and a table of every choice with its default filled in from the
+  repos, instead of a dozen questions one by one. Versioning still has no default and is always asked.
+- `AGENTS.md` flow step 4 (review and pre-PR gate), one ~350-word paragraph, is split into short bullets: part A,
+  parts B and C, findings, verifying the outcome, stamp and push, learning from reviews. Same rules.
+- Checklist item 9 says what `pre-pr-pass.sh` can't see: it reads commit subjects and order, not whether a test
+  really failed, so the red output and the test are the evidence.
+
+**Workspaces:** optional. Replace step 4 of the flow in `AGENTS.md` with the template's (keep the workspace's own
+date of the `pre-pr-review` opt-in), and add the three lines after item 9's text in
+`.orchestrator/pre-pr-checklist.md`. Setup changes need nothing.
+
 ## v0.5.1 — 2026-10-24
 
 - The `pre-pr-review` defaults to the normal tier, as `AGENTS.md` › *Model tiers* says: without `tier`, its

@@ -35,43 +35,42 @@ or `py -3`. It creates no symlinks.
   Ask the user only for what you can't find there.
 - A repo directory whose name has whitespace is refused: ask the user to rename it. Other names are
   fine: the developer agent's name is the repo name slugged (`My.API` → `my-api-dev`; `my_api_dev` in Codex).
-- Ask which tools will run the orchestrator: Claude Code, Codex or both. **Default: both** (`--tools`).
-- With Codex, confirm the model for each tier against what the user's account offers (`/model` in Codex).
-  **Default:** trivial `gpt-6-luna`, normal `gpt-6.1-sol`, hard `gpt-6-astra` (`CODEX_TRIVIAL`,
-  `CODEX_NORMAL`, `CODEX_HARD` in the environment override them).
 - Read each repo's conventions from its history: `git -C <repo> log --format=%s -30` for commit subjects, and
   `gh pr list --state merged -L 20 --json title` for PR titles. Note the convention they follow (Conventional
-  Commits, ticket prefixes, free text) and whether commits carry AI attribution. Confirm it with the user
-  rather than asking from scratch.
-- Ask whether the project uses a ticket system (Jira, Linear, GitHub Issues…). **Default: none.**
-- **The defaults, one by one.** Show the user what the orchestrator brings and ask which to keep, rewrite or
-  drop, and whether they have their own to add: the standards in `AGENTS.md` › *Standards*
-  (`software-principles`, `design-patterns`), the quality items of the checklist (part C), and test-first.
-  **Default: keep all.** Their own standards are skills: they go to `.agents/skills/` and get a row in
-  *Standards*.
-- Ask whether `push-pr.sh` should enforce the PR title (`TITLE_PATTERN`, `TITLE_MAX`) and refuse AI attribution
-  (`ATTRIBUTION="refuse"`). **Default: match what the history shows**, proposed to the user. When a repo
-  shows no convention, propose the orchestrator's default (Conventional Commits, titles of at most 72
-  characters, branches `<type>/<topic>`), write it in its section under *Repo guides*, and set
-  `TITLE_PATTERN`/`TITLE_MAX` if the user wants it enforced.
-- Ask whether the session should say when an orchestrator update is out (a SessionStart hook that looks up
-  the latest release in the background, once a day, and also notices a workspace behind the installed
-  skill). **Default: yes.** If not, pass `--no-update-check`.
-- Ask whether to version the orchestration layer in git. **No default: always ask**, it is the user's call.
-  Pass `--git` or `--no-git` accordingly; the scaffold refuses to run without one of them.
-- Ask whether the user opts into the `pre-pr-review` for large tasks (2–3 `architect` reviewers plus one
-  verifier per finding; a saved workflow in Claude Code, a skill in Codex). **Default: yes.** Claude
-  Code's Workflow tool needs that opt-in in the user's words, and `AGENTS.md` records it with the date.
-  If not, step 3 replaces it.
-- Ask whether test-first is enforced (`TDD="strict"` in `.orchestrator/orchestrator.conf`: `pre-pr-pass.sh`
-  refuses a code commit with no test commit before it). **Default: strict.** `TDD_TEST_COMMIT` and
-  `TDD_CODE_COMMIT` tell the two apart by subject; their defaults read Conventional Commits (`test…`,
-  `feat…`/`fix…`), so match them to the convention the history shows. Leave a repo with no test runner out of
-  `TDD_REPOS` (all repos when empty); `off` disables the check everywhere.
-- With Claude Code, ask which installed plugins and MCP servers this workspace doesn't need: they go off
-  in `.claude/settings.json` › `enabledPlugins` (`"<plugin>@<marketplace>": false`). **Default: none.**
+  Commits, ticket prefixes, free text) and whether commits carry AI attribution.
 - Note which repos have CI (`.github/workflows/`, `.gitlab-ci.yml`…) and what it runs: the full suite
   stays out of local checks there.
+
+### Ask, in one message
+
+Don't ask the choices one by one. Show the user, in one message, what you found (repos, stacks, conventions,
+CI) and the table below with the defaults filled in from what the repos show, and ask which to change and
+whether they have standards of their own to add. Versioning has no default: ask it on its own line in the
+same message. A reply that accepts the table accepts each line as written.
+
+| Choice | Default | Goes to |
+|---|---|---|
+| Tools that run the orchestrator | Claude Code and Codex | `--tools` |
+| Codex model per tier (with Codex; check `/model` in Codex) | trivial `gpt-6-luna`, normal `gpt-6.1-sol`, hard `gpt-6-astra` | `CODEX_TRIVIAL`, `CODEX_NORMAL`, `CODEX_HARD` in the environment |
+| Commit and PR convention, AI attribution | what the history shows; with no convention, Conventional Commits, titles of at most 72 characters, branches `<type>/<topic>` | the repo's section under *Repo guides* |
+| `push-pr.sh` enforces the title and refuses AI attribution | match the history | `TITLE_PATTERN`, `TITLE_MAX`, `ATTRIBUTION="refuse"` |
+| Ticket system (Jira, Linear, GitHub Issues…) | none | step 3, *Tickets* |
+| The orchestrator's standards (`software-principles`, `design-patterns`) and the checklist's quality items (part C) | keep all; their own standards are skills, in `.agents/skills/` with a row in *Standards* | step 3 |
+| Test-first enforced | `TDD="strict"`, with the commit subjects of the history; repos with no test runner left out of `TDD_REPOS` | `orchestrator.conf` |
+| `pre-pr-review` for large tasks (2–3 `architect` reviewers plus one verifier per finding) | yes | `AGENTS.md` records the opt-in with the date; no: step 3, *Review declined* |
+| Notice when an orchestrator update is out (SessionStart, looked up in the background once a day) | yes | no: `--no-update-check` |
+| Plugins and MCP servers this workspace doesn't need (with Claude Code) | none | `.claude/settings.json` › `enabledPlugins` (`"<plugin>@<marketplace>": false`) |
+| Version the orchestration layer in git | **no default: always ask** | `--git` or `--no-git`; the scaffold refuses to run without one |
+
+Notes for the table:
+
+- **Test-first.** With `TDD="strict"`, `pre-pr-pass.sh` refuses a code commit with no test commit before it.
+  `TDD_TEST_COMMIT` and `TDD_CODE_COMMIT` tell the two apart by subject; their defaults read Conventional
+  Commits (`test…`, `feat…`/`fix…`), so match them to the history. `off` disables the check everywhere.
+- **`pre-pr-review`.** Claude Code's Workflow tool needs the opt-in in the user's words: the table's line must
+  name it, and the reply must accept it, on its own or with the whole table.
+- **Conventions.** When a repo shows no convention and the user takes the default, write it in the repo's
+  section under *Repo guides*, and set `TITLE_PATTERN`/`TITLE_MAX` only if the user wants it enforced.
 
 ## 2. Run the scaffold
 
