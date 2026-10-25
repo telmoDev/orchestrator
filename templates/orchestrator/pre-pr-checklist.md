@@ -42,6 +42,9 @@ stable: `.claude/workflows/pre-pr-review.js` and the `pre-pr-review` skill revie
 9. **Test first** (only with `TDD="strict"`). Each criterion has a test that fails without the change: the
    agent's report shows the red output, and a test commit comes before each code commit (`pre-pr-pass.sh`
    refuses otherwise). The tests assert the behaviour the criterion states, not the implementation.
+   `pre-pr-pass.sh` reads only commit subjects and their order: it can't tell a real failing test from an empty
+   one, and it skips commits outside `TDD_CODE_COMMIT` (a `refactor:` that changes behaviour). The red output and
+   the test itself are the evidence: read them.
 
 ## C. Quality (the orchestrator's defaults; the user keeps, rewrites or drops each one at setup, and adds their own)
 
