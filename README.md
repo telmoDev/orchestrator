@@ -4,8 +4,8 @@
 
 The `orchestrator-setup` skill. It scaffolds an orchestration layer at the root of a multi-repo workspace,
 for **Claude Code**, **Codex** or both, on **macOS, Linux and Windows**: one shared guide (`AGENTS.md`),
-session memory with `sync-memory`, explorer/architect/developer agents, an outcome-driven flow with
-test-first, model tiers by task size, and a pre-PR gate.
+session memory with `sync-memory`, explorer/architect/developer agents, an organic flow (ODD) that
+scales its process to the request, verified outcomes, test-first, model tiers by task size, and a pre-PR gate.
 
 It brings good-practice defaults that hold for any stack (design principles and patterns, test-first, a
 quality checklist) and adapts them to the user: setup reads each repo's conventions and asks what to keep,
@@ -22,7 +22,7 @@ the user's.
 
 | Shared by both tools | Claude Code adapter | Codex adapter |
 |---|---|---|
-| `AGENTS.md` (the guide), `memory/`, `.orchestrator/` (config, checklist, scripts, hooks), `.agents/skills/` | `CLAUDE.md` (imports `AGENTS.md`), `.claude/` (settings, agents, workflow, skill copies) | `.codex/` (config, hooks, agents) |
+| `AGENTS.md` (the guide), `memory/`, `odd/` (task files), `.orchestrator/` (config, checklist, scripts, hooks), `.agents/skills/` | `CLAUDE.md` (imports `AGENTS.md`), `.claude/` (settings, agents, workflow, skill copies) | `.codex/` (config, hooks, agents) |
 
 ## Requirements
 

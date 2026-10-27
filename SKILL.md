@@ -1,6 +1,6 @@
 ---
 name: orchestrator-setup
-description: Set up the orchestrator layer in a multi-repo workspace, for Claude Code, Codex or both, on macOS, Linux or Windows ("implementa la estructura de orquestador"): shared AGENTS.md guide, memory/ + sync-memory, explorer/architect/dev agents, outcome-driven flow (ODD) with test-first (TDD), model tiers by task size, pre-PR gate, token-saving settings. Ships good-practice defaults for any stack and adapts them to the user's repos and preferences.
+description: Set up the orchestrator layer in a multi-repo workspace, for Claude Code, Codex or both, on macOS, Linux or Windows ("implementa la estructura de orquestador"): shared AGENTS.md guide, memory/ + sync-memory, explorer/architect/dev agents, Organic Driven Development (ODD) flow with verified outcomes, task files and run log, test-first (TDD), model tiers by task size, pre-PR gate, token-saving settings. Ships good-practice defaults for any stack and adapts them to the user's repos and preferences.
 ---
 
 # Set up the orchestrator structure
@@ -9,9 +9,10 @@ This sets up an orchestration layer at the root of a workspace whose application
 underneath it. The orchestrator plans, delegates, integrates and reports. Subagents write the application
 code. One guide, `AGENTS.md`, serves both tools: Codex reads it directly and Claude Code through a
 `CLAUDE.md` that imports it. Everything shared lives in `.orchestrator/` (config, checklist, scripts,
-hooks), `.agents/skills/` and `memory/`; `.claude/` and `.codex/` hold only each tool's adapter.
+hooks), `.agents/skills/`, `memory/` and the task files in `odd/`; `.claude/` and `.codex/` hold only each tool's adapter.
 
-The orchestrator brings its own way of working: an outcome-driven flow, test-first, design principles and
+The orchestrator brings its own way of working: an organic flow (ODD) whose process grows only as far as the
+request needs, verified outcomes, test-first, design principles and
 patterns, and a quality checklist. These defaults hold for any stack. Everything else is the user's: the
 stack, the commit and PR conventions, the ticket system, attribution. Setup reads those from the repos and asks
 about the rest, and the user keeps, rewrites or drops any default. After setup, the guide keeps adapting:
@@ -82,8 +83,9 @@ With no repo arguments it uses the detected ones. It creates:
 
 | Path | Tool | What it is |
 |---|---|---|
-| `AGENTS.md` | both | The guide: orchestrator role, the outcome-driven flow (outcome and criteria before delegating, test-first when `TDD` is on, the orchestrator verifies each criterion as `passed`/`failed`/`blocked`/`pending`), *Standards* (the skills briefs name), token budget with *Model tiers* (Claude and Codex models per tier; escalate one tier after two failures), *Repo guides* for repos with no guide of their own, *Workspace rules* (where the user's corrections and preferences go), and *Tool mapping*: what differs between the two tools, and the platform rules. Created only if absent; otherwise the template goes to `.orchestrator/AGENTS.orchestrator.md` for you to merge |
+| `AGENTS.md` | both | The guide: orchestrator role, the ODD flow (a question changes nothing; size by understanding, risk and how easily the work resumes; a task file for a large task; resume from evidence, not ticks; one push authorization per feature), outcome-driven within it (outcome and criteria before delegating, test-first when `TDD` is on, the orchestrator verifies each criterion as `passed`/`failed`/`blocked`/`pending`), *Standards* (the skills briefs name), token budget with *Model tiers* (Claude and Codex models per tier; escalate one tier after two failures), *Repo guides* for repos with no guide of their own, *Workspace rules* (where the user's corrections and preferences go), and *Tool mapping*: what differs between the two tools, and the platform rules. Created only if absent; otherwise the template goes to `.orchestrator/AGENTS.orchestrator.md` for you to merge |
 | `memory/*.md` | both | The four memory files, empty and in their entry shape |
+| `odd/README.md` | both | The shape and rules of a large task's file, `odd/tasks/<feature>.md`: the request quoted exactly, outcome, specs, tasks T1… with dependencies and status, evidence, run log (tokens and duration as reported), decisions and scope changes |
 | `.orchestrator/orchestrator.conf` | both | `REPOS`, `BASE_BRANCHES` (from `origin/HEAD`, else `main`, else `master`; `TODO` when none), `WORD_BUDGET`, `TDD`, `TDD_TEST_COMMIT`, `TDD_CODE_COMMIT`, `TDD_REPOS`, `TDD_SINCE`, `CODEX_ONLY_SKILLS`; optional `GIT_WRAPPER`, `TICKET_LINE`, `TITLE_PATTERN`, `TITLE_MAX`, `ATTRIBUTION`, `ADR_DIR`, `DECISION_LOG`, `UPDATE_CHECK` |
 | `.orchestrator/pre-pr-checklist.md` | both | The pre-PR gate: part A mechanical (owning agent), part B the flow's review, part C quality (defaults the user adapts). Grows one line per review comment it missed |
 | `.orchestrator/scripts/` | both | `memory-state.sh` and `memory-check.py` (write the git-derived state, refuse memory git contradicts); `pre-pr-pass.sh` (stamp the commit that passed the gate; with `TDD="strict"` it refuses a code commit no test commit precedes; `TDD_EXEMPT="<reason>"` skips it once); `push-pr.sh` (push and open the PR, refusing an unstamped HEAD and a stale base, plus what the config sets: `TICKET_LINE`, `TITLE_PATTERN`, `TITLE_MAX`, `ATTRIBUTION`); `sync-skills.sh` (copy `.agents/skills/` into `.claude/skills/`) |
@@ -176,7 +178,7 @@ It should return nothing.
 2. Run `bash .orchestrator/scripts/memory-state.sh`, then `python3 .orchestrator/scripts/memory-check.py`.
    Without `gh` or a remote they warn and skip the PR part. They must not fail.
 3. Unless `--no-git` was used, ask the user before the first commit at the root:
-   `git add AGENTS.md CLAUDE.md .orchestrator .agents .claude .codex memory .gitignore .gitattributes && git commit`,
+   `git add AGENTS.md CLAUDE.md .orchestrator .agents .claude .codex memory odd .gitignore .gitattributes && git commit`,
    with a message in the convention the user chose (leave out what the chosen tools didn't create). Never add a remote or push unless the user asks.
 4. Report: files created, files skipped (already present), the TODOs left for the user, and how to start (`USAGE.md` in this skill's directory is the person-facing version)
    in each tool. Claude Code: open it at the workspace root; `/sync-memory` once per session; `/usage` to

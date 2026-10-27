@@ -9,7 +9,20 @@ the **orchestrator**: it plans, briefs helper agents, checks their work and repo
 write application code itself. Helper agents do: `explorer` looks things up, `architect` plans and
 reviews, one `<repo>-dev` per repo implements.
 
-Each task follows the same flow:
+The way of working is **Organic Driven Development (ODD)**: the process grows only as far as your request
+needs.
+
+- **A question changes nothing.** Asking it to explain, investigate or propose gets you an answer, with no
+  edits, branches or files. Only a request to change something starts the flow below.
+- **Small or large, by understanding and risk**, not by size. A clear, low-risk change in one repo goes
+  straight through. Anything unclear, risky, spread over several tasks or likely to outlive the session is
+  large: it first gets a task file, `odd/tasks/<feature>.md`, with your request quoted exactly, the
+  criteria, the tasks and their status, the evidence of each, and a run log (tokens and duration as the tool
+  reported them, never estimated).
+- **Resuming** a large task starts from that file, checked against git: it continues at the first task
+  that is really pending, and doesn't trust a status that the evidence no longer backs.
+
+Each change follows the same steps:
 
 1. **Outcome first.** Before anything is built, the orchestrator writes down your goal, the observable
    result and 2–5 acceptance criteria (O1, O2…). It asks you only when a gap could change the result.
@@ -17,9 +30,12 @@ Each task follows the same flow:
 3. **Test first** (on by default). The dev agent writes a failing test per criterion, commits it, then the
    code that makes it pass. The gate refuses a code commit with no test commit before it.
 4. **Pre-PR gate.** Nothing is pushed until the branch passes the checklist in
-   `.orchestrator/pre-pr-checklist.md` and the orchestrator has rerun each criterion's test itself.
+   `.orchestrator/pre-pr-checklist.md` and the orchestrator has rerun each criterion's test itself. Then it
+   asks you once per feature before the first push; that yes covers its later pushes and PRs until they
+   merge or the scope changes. It never merges or deploys.
 5. **Report.** You get each criterion as `passed`, `failed`, `blocked` or `pending`, with the command that
-   shows it. Nothing unverified is called done.
+   shows it, what failed or is still open, what changed in memory, and the next step. Nothing unverified is
+   called done.
 
 To save tokens, each helper runs on the cheapest model that can do the job right: **trivial** (small
 docs/config), **normal** (a feature with a fixed contract), **hard** (unclear bugs, security, migrations).

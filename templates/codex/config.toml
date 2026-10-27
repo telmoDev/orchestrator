@@ -4,6 +4,10 @@
 # Compact well before the full window, as Claude Code does at 150k: the orchestrator rereads its context every turn.
 model_auto_compact_token_limit = 150000
 
+# Codex reads AGENTS.md only up to this many bytes (default 32 KiB) and drops the rest, Tool mapping included.
+# The guide grows with each repo and Workspace rule; memory-check.py fails when it no longer fits.
+project_doc_max_bytes = 65536
+
 [agents]
 # Subagents default to the normal tier at medium effort; a spawn request names another tier's model.
 default_subagent_model = "{{CODEX_NORMAL}}"

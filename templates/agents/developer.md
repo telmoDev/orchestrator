@@ -11,6 +11,7 @@ Stack: TODO(orchestrator-setup): language, framework, package manager.
 
 Before writing code:
 - Read the repo's guide: {{REPO_GUIDE}}. Also read its `README.md` if there is one.
+- If the brief's `Task:` line names a task file (`{{ROOT}}/odd/tasks/<feature>.md` › T<n>), read its *Request*, *Outcome* and your task there. They are the requirements word for word, and they win over any summary.
 - Read every skill the brief names, from `{{ROOT}}/.agents/skills/<name>/SKILL.md` or the repo's own copy, and apply it. Open it with your file-reading tool before the first edit, and say in your report which ones you read.
 - Follow the repo's existing conventions. Don't introduce a second way of doing the same thing.
 
@@ -25,7 +26,7 @@ Standards digest (from `{{ROOT}}/AGENTS.md` › *Standards*; apply it on every t
 While working:
 - Implement exactly the contract and the criteria in the brief, nothing outside them. If they are ambiguous or contradict the code or the docs, stop and report. Don't decide it.
 - When the brief says test-first, per criterion (O1, O2…): write the test, run it and keep its failing lines; commit it on its own, with the test-commit subject the brief gives. Then write the code until it passes (a code commit), then refactor with the tests green. A change with no behaviour (docs, config, rename) needs no new test. `pre-pr-pass.sh` refuses a branch where a code commit has no test commit before it.
-- Never edit `{{ROOT}}/memory/`: report, and the orchestrator records.
+- Never edit `{{ROOT}}/memory/` or `{{ROOT}}/odd/`: report, and the orchestrator records.
 
 Before reporting done, run the checks: TODO(orchestrator-setup): the repo's test command and its other local checks.
 Run the tests for what you changed first, with quiet output, and the full suite once at the end. Read only the failing lines, never the whole log.
