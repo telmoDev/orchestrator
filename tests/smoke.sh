@@ -67,6 +67,59 @@ else echo "skip - workflow (no node)"; fi
 run "memory-state.sh" bash .orchestrator/scripts/memory-state.sh
 run "memory-check.py" $py .orchestrator/scripts/memory-check.py
 
+# ODD: both tools get the same rules, and memory-check covers the task files.
+[ -f odd/README.md ] || die "scaffold created odd/README.md"; ok "scaffold created odd/README.md"
+grep -qx '@AGENTS.md' CLAUDE.md || die "CLAUDE.md imports AGENTS.md"; ok "Claude Code reads the guide Codex reads"
+for rule in 'Organic Driven Development (ODD)' '**Ask or change.**' '**Size.**' 'odd/tasks/<feature>.md' '**Resume.**' 'ask the user once per feature'; do
+  grep -qF "$rule" AGENTS.md || die "AGENTS.md has the ODD rule '$rule'"
+done; ok "AGENTS.md has the ODD rules (ask or change, size, task file, resume, push)"
+for a in api-dev architect; do
+  grep -q 'odd/tasks/' ".claude/agents/$a.md" && grep -q 'odd/tasks/' ".codex/agents/$a.toml" || die "$a reads the task file in both tools"
+done; ok "the agents read the task file in both tools"
+mkdir -p odd/tasks; cp memory/PROGRESS.md memory/PROJECT_STATE.md .codex/config.toml "$tmp/"
+cat >odd/tasks/login.md <<'EOF'
+# login
+
+Status: active · Next: T2
+
+## Request
+> Add a login.
+
+## Outcome
+Criteria: O1 the form posts · O2 the session persists
+
+## Tasks
+| ID | Task | Serves | Status |
+|---|---|---|---|
+| T1 | form | O1 | done |
+| T2 | session | O2 | pending |
+
+## Evidence
+- 2026-01-01 T1 · O1 · `npm test form` → passed: 3 passing
+EOF
+printf '\n## 2026-01-01 — login (—) — partial\nDoc: odd/tasks/login.md\nContinue at: api, T2\n' >>memory/PROGRESS.md
+perl -0pi -e 's/(\| Feature \|.*\n\|---[|-]*\n)/$1| login | — | odd\/tasks\/login.md | — | 1\/2 passed | in progress | not run |\n/' memory/PROJECT_STATE.md
+mc() { $py .orchestrator/scripts/memory-check.py; }
+run "memory-check accepts a task file that agrees with the memory" mc
+cp odd/tasks/login.md "$tmp/login.md"
+echo 'token: abcd1234efgh' >>odd/tasks/login.md
+refuse "memory-check refuses a secret in a task file" "looks like a secret" mc
+cp "$tmp/login.md" odd/tasks/login.md; sed -i.bak 's/| O2 | pending |/| O2 | done |/' odd/tasks/login.md
+refuse "memory-check refuses a done task with no evidence" "T2 is done with no evidence" mc
+cp "$tmp/login.md" odd/tasks/login.md; sed -i.bak 's#1/2 passed#2/2 passed#' memory/PROJECT_STATE.md
+refuse "memory-check refuses an In flight outcome the task file contradicts" "the task file has 1/2 passed" mc
+cp "$tmp/PROJECT_STATE.md" memory/PROJECT_STATE.md; sed -i.bak 's/^Status: active/Status: done/' odd/tasks/login.md
+refuse "memory-check refuses a done task file still in PROGRESS" "is done but PROGRESS still lists it" mc
+cp "$tmp/login.md" odd/tasks/login.md; sed -i.bak 's#odd/tasks/login.md#odd/tasks/gone.md#' memory/PROGRESS.md
+refuse "memory-check refuses a link to a missing task file" "no such task file" mc
+cp "$tmp/PROGRESS.md" memory/PROGRESS.md
+grep -q '^project_doc_max_bytes = ' .codex/config.toml || die "Codex config sets project_doc_max_bytes"
+[ "$(wc -c <AGENTS.md)" -le "$(sed -n 's/^project_doc_max_bytes = //p' .codex/config.toml)" ] || die "AGENTS.md fits Codex's limit"
+ok "AGENTS.md fits Codex's project_doc_max_bytes"
+sed -i.bak 's/^project_doc_max_bytes = .*/project_doc_max_bytes = 1000/' .codex/config.toml
+refuse "memory-check refuses an AGENTS.md that Codex would truncate" "Codex reads only" mc
+cp "$tmp/config.toml" .codex/config.toml; rm -rf odd/tasks memory/*.bak .codex/*.bak
+
 # The gate. TDD is strict by default: a code commit needs a test commit before it.
 api="$ws/api"
 commit() { echo "$1" >>"$api/x.txt"; git -C "$api" add x.txt; git -C "$api" commit -qm "$1"; }

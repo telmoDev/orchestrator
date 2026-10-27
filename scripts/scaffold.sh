@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Scaffold the orchestrator layer into a workspace root, for Claude Code, Codex or both.
 #   bash scaffold.sh --git|--no-git [--no-update-check] [--tools claude,codex] <workspace-root> [repo ...]
-# Shared: AGENTS.md, memory/, .orchestrator/ (config, checklist, scripts, hooks), .agents/skills/.
+# Shared: AGENTS.md, memory/, odd/ (task files), .orchestrator/ (config, checklist, scripts, hooks), .agents/skills/.
 # Claude Code: CLAUDE.md (imports AGENTS.md), .claude/ (settings, agents, workflow, copies of the skills).
 # Codex: .codex/ (config.toml, hooks.json, agents/*.toml rendered from the same agent sources).
 # --git:    version the orchestration layer (git init at the root when it has subrepos, a root .gitignore).
@@ -95,7 +95,7 @@ for r in "${repos[@]}"; do
   dev_rows+="| \`$agent\` | normal (by tier) | implementation in \`$label\` |"$'\n'
 done
 [ -n "$repo_sections" ] || repo_sections="All repos have their own guide."$'\n'
-layer="\`AGENTS.md\`, \`CLAUDE.md\`, \`.orchestrator/\`, \`.agents/\`, \`.claude/\`, \`.codex/\`, \`memory/\`"
+layer="\`AGENTS.md\`, \`CLAUDE.md\`, \`.orchestrator/\`, \`.agents/\`, \`.claude/\`, \`.codex/\`, \`memory/\`, \`odd/\`"
 if [ "$root_git" = yes ]; then
   root_vcs="The root is its own small git repo. It ignores the app repos and versions only the orchestration layer ($layer)."
 else
@@ -132,6 +132,7 @@ guide "$tpl/AGENTS.md" AGENTS.md .orchestrator/AGENTS.orchestrator.md
 if [ "$root_git" = yes ]; then render "$tpl/gitignore" "$root/.gitignore" || true; fi
 render "$tpl/gitattributes" "$root/.gitattributes" || true
 for f in "$tpl"/memory/*.md; do render "$f" "$root/memory/$(basename "$f")" || true; done
+render "$tpl/odd/README.md" "$root/odd/README.md" || true
 render "$tpl/orchestrator/orchestrator.conf" "$root/.orchestrator/orchestrator.conf" || true
 render "$tpl/orchestrator/pre-pr-checklist.md" "$root/.orchestrator/pre-pr-checklist.md" || true
 for f in "$tpl"/orchestrator/scripts/* "$tpl"/orchestrator/hooks/*; do
@@ -176,6 +177,7 @@ if [ "$root_git" = no ]; then
   if [ "$repo_list" = "." ] && [ -d "$root/.git" ]; then
     ex="$root/.git/info/exclude"; mkdir -p "$(dirname "$ex")"; touch "$ex"
     for f in "${created[@]+"${created[@]}"}"; do grep -qxF "/${f%% *}" "$ex" || echo "/${f%% *}" >>"$ex"; done
+    grep -qxF "/odd/" "$ex" || echo "/odd/" >>"$ex"  # the task files written later
     echo "excluded the new orchestration files in .git/info/exclude"
   fi
 elif [ "$repo_list" != "." ] && [ -f "$root/.gitignore" ]; then

@@ -19,10 +19,10 @@ Standards digest (from `{{ROOT}}/AGENTS.md` › *Standards*; apply it on every t
 - Before adding an abstraction or a design pattern: it has two real uses today, it reads simpler, and the problem it solves exists now. If any fails, write the direct code.
 - The repo's established way wins over any of this.
 
-When planning, start from the outcome in the brief. Tighten each criterion until a test can decide it, and add the ones it misses. Then produce: the steps, which agent and tier (trivial/normal/hard, per `{{ROOT}}/AGENTS.md` › *Model tiers*) does each, the criteria each step serves, which steps depend on which and which can run in parallel (no shared files), and the exact contract (interfaces, data shapes, errors) that both sides will implement. List open questions, assumptions and risks separately.
+When planning, start from the outcome in the brief, and from the request in the task file the brief names (`{{ROOT}}/odd/tasks/<feature>.md`), word for word. Tighten each criterion until a test can decide it, and add the ones it misses. Then produce: the tasks T1, T2… for the orchestrator to record in the task file, which agent and tier (trivial/normal/hard, per `{{ROOT}}/AGENTS.md` › *Model tiers*) does each, the criteria each step serves, which tasks depend on which and which can run in parallel (no shared files), and the exact contract (interfaces, data shapes, errors) that both sides will implement. List open questions, assumptions and risks separately.
 
 When reviewing, start from `git -C <repo> diff --stat <base>...HEAD`. Open only the files that carry risk. Check that each criterion of the outcome has a test or command that decides it and, when the brief says the repo works test-first, that the test came before the code. Report real defects with `file:line`, why they're wrong, and the fix. Leave out style nits the linter already covers.
 
-You are read-only: never edit, commit or push, and never write `{{ROOT}}/memory/`.
+You are read-only: never edit, commit or push, and never write `{{ROOT}}/memory/` or `{{ROOT}}/odd/`.
 
 Report in at most 15 lines unless the brief asks for a full plan.

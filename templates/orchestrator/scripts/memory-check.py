@@ -5,7 +5,11 @@ Fails (exit 1) on: a repeated line within a section; a PR reference that does no
 In flight PRs cell that calls a PR open/draft/merged/closed when GitHub disagrees; an open PR
 missing from the In flight table; a commit hash in In flight; a "done" entry in PROGRESS; a
 DECISIONS entry with no Until line, or whose Until PR is merged/closed or whose Until date is past;
-anything that looks like a secret or an email address; the four files over the word budget.
+anything that looks like a secret or an email address, in memory/ or a task file (odd/tasks/*.md);
+a PROGRESS "Doc:" line naming a task file that does not exist, or one whose Status is done; a task
+file task marked done with no Evidence line naming it, or a done task file with tasks not done; an
+In flight "N/M passed" cell that the linked task file contradicts; the four files over the word
+budget; an AGENTS.md longer than Codex reads (project_doc_max_bytes in .codex/config.toml).
 Warns on: PR checks skipped (no gh or no remote).
 Repos come from .orchestrator/orchestrator.conf.
 """
@@ -20,6 +24,7 @@ import sys
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 MEM = os.path.join(ROOT, "memory")
 FILES = ["PROJECT_STATE.md", "PROGRESS.md", "DECISIONS.md", "NEXT_STEPS.md"]
+TASKS = os.path.join(ROOT, "odd", "tasks")
 
 
 def conf():
@@ -85,6 +90,49 @@ for r in REPOS:
     else:
         gh[LABEL[r]] = found
 text = {f: open(os.path.join(MEM, f)).read() for f in FILES if os.path.exists(os.path.join(MEM, f))}
+tasks = {}
+if os.path.isdir(TASKS):
+    for t in sorted(os.listdir(TASKS)):
+        if t.endswith(".md"):
+            with open(os.path.join(TASKS, t), encoding="utf-8") as fh:
+                tasks["odd/tasks/" + t] = fh.read()
+
+
+def sections(body):
+    """{heading: its text} for the '## ' sections of a task file, code blocks left out."""
+    out, cur = {}, None
+    for line in prose(body).splitlines():
+        if line.startswith("## "):
+            cur = line[3:].strip()
+            out[cur] = []
+        elif cur:
+            out[cur].append(line)
+    return {k: "\n".join(v) for k, v in out.items()}
+
+
+def task_state(body):
+    """A task file's Status, its tasks' statuses, and (criteria passed, criteria total) from its Evidence."""
+    sec = sections(body)
+    status = re.search(r"^Status:\s*(\w+)", body, re.M)
+    rows = re.findall(r"^\|\s*(T\d+)\s*\|.*\|\s*([^|]*?)\s*\|\s*$", sec.get("Tasks", ""), re.M)
+    crit = re.search(r"^Criteria:(.*)$", sec.get("Outcome", ""), re.M)
+    total = sorted(set(re.findall(r"\bO\d+\b", crit.group(1)))) if crit else []
+    latest = {}  # each criterion's last logged result
+    for line in sec.get("Evidence", "").splitlines():
+        res = re.search(r"→\s*(passed|failed)", line)
+        if res:
+            for o in re.findall(r"\bO\d+\b", line.split("→")[0]):
+                latest[o] = res.group(1)
+    return {
+        "status": status.group(1).lower() if status else "",
+        "tasks": [(t, st.lower()) for t, st in rows],
+        "evidence": set(re.findall(r"\bT\d+\b", sec.get("Evidence", ""))),
+        "passed": sum(1 for o in total if latest.get(o) == "passed"),
+        "total": len(total),
+    }
+
+
+state_of = {f: task_state(b) for f, b in tasks.items()}
 
 
 def actual(pr):
@@ -184,8 +232,40 @@ for entry in re.split(r"^(?=## )", prose(text.get("DECISIONS.md", "")), flags=re
             if pr and actual(pr) in ("merged", "closed"):
                 errors.append(f"DECISIONS.md '{title}': Until {r} #{num_s}, which is {actual(pr)}, delete the entry")
 
-# 4. Secrets and personal data.
-for f, body in text.items():
+# 3e. A task is done only with evidence, and a task file is done only when all its tasks are.
+for f, st in state_of.items():
+    for tid, status in st["tasks"]:
+        if status.startswith("done") and tid not in st["evidence"]:
+            errors.append(f"{f}: {tid} is done with no evidence: log its check under Evidence or set it back to pending")
+        if st["status"] == "done" and not status.startswith("done"):
+            errors.append(f"{f}: Status: done but {tid} is {status}")
+
+# 3f. A PROGRESS "Doc:" line names a task file that exists and is not done.
+for n, line in enumerate(prose(text.get("PROGRESS.md", "")).splitlines(), 1):
+    doc = re.match(r"Doc:\s*`?([^`\s]+)", line)
+    if not doc:
+        continue
+    if not os.path.isfile(os.path.join(ROOT, doc.group(1))):
+        errors.append(f"PROGRESS.md:{n}: no such task file: {doc.group(1)}")
+    elif state_of.get(doc.group(1), {}).get("status") == "done":
+        errors.append(f"PROGRESS.md:{n}: {doc.group(1)} is done but PROGRESS still lists it")
+
+# 3g. An In flight row that links a task file agrees with it on the criteria passed.
+if m:
+    for row in m.group(1).splitlines():
+        doc = re.search(r"(odd/tasks/[^\s|`)\]]+\.md)", row)
+        if not row.startswith("|") or not doc:
+            continue
+        st = state_of.get(doc.group(1))
+        if st is None:
+            errors.append(f"PROJECT_STATE.md In flight: no such task file: {doc.group(1)}")
+            continue
+        cell = re.search(r"(\d+)/(\d+) passed", row)
+        if cell and (int(cell.group(1)), int(cell.group(2))) != (st["passed"], st["total"]):
+            errors.append(f"PROJECT_STATE.md In flight: says {cell.group(0)}, the task file has {st['passed']}/{st['total']} passed ({doc.group(1)})")
+
+# 4. Secrets and personal data, in the memory and in the task files (committed with it).
+for f, body in list(text.items()) + list(tasks.items()):
     for n, line in enumerate(body.splitlines(), 1):
         if SECRET.search(line):
             errors.append(f"{f}:{n}: looks like a secret or an email: {line.strip()[:70]}")
@@ -194,6 +274,17 @@ for f, body in text.items():
 words = sum(len(GENERATED.sub("", b).split()) for b in text.values())
 if words > WORD_BUDGET:
     errors.append(f"memory is {words} words (budget {WORD_BUDGET}): trim PROGRESS first, then DECISIONS")
+
+# 6. Codex reads only the first project_doc_max_bytes of AGENTS.md: past it, the end of the guide is lost.
+codex_cfg, guide = os.path.join(ROOT, ".codex", "config.toml"), os.path.join(ROOT, "AGENTS.md")
+if os.path.exists(codex_cfg) and os.path.exists(guide):
+    with open(codex_cfg, encoding="utf-8") as fh:
+        lim = re.search(r"^project_doc_max_bytes\s*=\s*(\d+)", fh.read(), re.M)
+    limit, size = int(lim.group(1)) if lim else 32768, os.path.getsize(guide)
+    if size > limit:
+        errors.append(f"AGENTS.md is {size} bytes; Codex reads only {limit} (project_doc_max_bytes in .codex/config.toml): trim it or raise the limit")
+    elif size > limit * 0.85:
+        warnings.append(f"AGENTS.md is {size} bytes, near the {limit} Codex reads: trim it before it grows")
 
 for w in warnings:
     print("warn:", w)

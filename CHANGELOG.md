@@ -11,6 +11,41 @@ into the new version's section.
 
 ## Unreleased
 
+- The flow is **Organic Driven Development (ODD)**: the process grows only as far as the request needs.
+  "Outcome-driven" stays as the criteria layer inside it, without the acronym.
+  - *Ask or change*: an explanation, investigation or proposal edits nothing and creates no task file or memory entry.
+  - Small/large is sized by understanding, risk and how easily the work resumes, not by "~100 changed lines".
+  - A large task gets `odd/tasks/<feature>.md` before any code changes (shape and rules in the new
+    `odd/README.md`): the request quoted exactly, outcome, specs, tasks T1… with dependencies and status,
+    evidence, run log, decisions and scope changes. Briefs name `odd/tasks/<feature>.md › T<n>` and copy its
+    criteria word for word; the agents read it and never write it.
+  - *Resume*: from the task file checked against git, at the first task really pending; a status without
+    evidence that holds goes back to `pending`.
+  - A passing gate no longer pushes on its own: the orchestrator asks the user once per feature before its first
+    push. The yes covers its later pushes and PRs until they merge, lapses on a change of scope, and a large
+    task records it in its task file.
+  - The report adds failures and limits, task-file and memory changes, and the next step.
+  - When no deterministic test fits a criterion, the brief says why and names the check that decides it.
+- *Cost per task* becomes *Run log*: agent, tier, attempt, tokens and duration as the tool reported them (or
+  `not reported`), first error and result, in the task file. Still no estimates and no budget enforcement; a
+  budget the user sets is a criterion of the outcome.
+- `memory-check.py` scans `odd/tasks/*.md` for secrets and refuses: a `PROGRESS.md` `Doc:` line naming a missing
+  or finished task file; a task `done` with no *Evidence* line; `Status: done` with tasks not done; an *In flight*
+  `N/M passed` cell that the task file's evidence contradicts.
+- Codex reads `AGENTS.md` only up to `project_doc_max_bytes` (32 KiB by default) and silently drops the rest,
+  *Tool mapping* first. `.codex/config.toml` sets it to 64 KiB, and `memory-check.py` fails when `AGENTS.md`
+  outgrows it (a warning past 85%). `sync-memory` keeps the task files current and commits `odd/` with `memory/`.
+- `tests/smoke.sh` checks that the ODD rules reach both tools and that `memory-check.py` covers the task files.
+
+**Workspaces:** optional, recommended. Copy `templates/odd/README.md` to `odd/README.md`. In `AGENTS.md`, replace the
+flow's opening paragraph through step 3, the *Stamp and push* bullet, step 5 with the new *Resume* paragraph,
+the outcome paragraph and the briefs' first sentence, *Cost per task* (now *Run log*), and add the *Run log
+figures* row to *Tool mapping*; add `odd/` to the layer list under *Orchestrator role*. Take the new lines in
+`.claude/agents/{architect,*-dev}.md` and regenerate the Codex agents. Replace `memory/PROGRESS.md`'s entry
+shape, `.agents/skills/sync-memory/SKILL.md` (then `sync-skills.sh`) and `.orchestrator/scripts/memory-check.py`.
+With Codex, add `project_doc_max_bytes = 65536` to `.codex/config.toml`. In single-repo mode without git, add
+`/odd/` to `.git/info/exclude`.
+
 ## v0.6.0 — 2026-10-24
 
 - Setup asks in one message: what it found and a table of every choice with its default filled in from the

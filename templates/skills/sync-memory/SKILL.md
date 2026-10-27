@@ -24,7 +24,8 @@ It rewrites the block between the `state:begin` / `state:end` markers in `memory
 Edit the files directly, with targeted edits. Change only what differs, and keep each file's headings and entry shape.
 
 - **`PROJECT_STATE.md` › In flight**: one row per feature. Each row maps the feature to its ticket (`—` if the project uses none), its spec and decisions, its PRs (`<repo> #N open|draft`) and its outcome status (`2/3 passed, O3 pending`; the criteria text stays in the PR body or the spec). This mapping is the part a script can't know. Every open PR in the generated block must appear in some row. No branch names or commit hashes: the generated block has them. Drop rows whose PRs are all merged or closed. Update **Blocked**.
-- **`PROGRESS.md`**: partial tasks only. A task is **done** when its code is on a branch with a PR, the checks ran and passed, and every criterion of its outcome is `passed` on evidence the orchestrator checked: delete its entry, because the PR keeps the record. A task that isn't done gets one entry **at the top**, in the file's shape, with its repo, branch, PR, checks with their real results ("not run" if they weren't run), the integration result, its outcome (the criteria with their status, in full only while no PR body holds them), its cost line (tier, attempts and only the token figures an Agent result reported) and an exact `Continue at:` (repo, branch, file(:line) or step, next command). Write "unverified" rather than guess.
+- **`PROGRESS.md`**: partial tasks only. A task is **done** when its code is on a branch with a PR, the checks ran and passed, and every criterion of its outcome is `passed` on evidence the orchestrator checked: delete its entry, because the PR keeps the record. A task that isn't done gets one entry **at the top**, in the file's shape, with its repo, branch, PR, checks with their real results ("not run" if they weren't run), the integration result, its outcome (the criteria with their status, in full only while no PR body holds them), its cost line (tier, attempts and only the token figures an Agent result reported) and an exact `Continue at:`. A large task's entry instead links its task file with `Doc: odd/tasks/<feature>.md` and leaves the outcome and the cost there; it keeps the branch, checks and `Continue at:` (repo, branch, file(:line) or step, next command). Write "unverified" rather than guess.
+- **Task files** (`odd/tasks/*.md`) of the large tasks worked on this session: the task statuses, *Evidence*, *Run log*, *Decisions and scope changes* and the `Next:` line match what happened and what was verified. A task without evidence is not `done`. A finished feature gets `Status: done`. In **In flight**, its *Spec · decisions* cell links the task file.
 - **`NEXT_STEPS.md`**: Resume = where each partial task continues. Pending = next tasks in order, without the cleanup the generated block already lists. Waiting on others = only what git can't show (decisions, answers, third parties), with their owner.
 - **Something agreed with the user this session**: a lasting rule goes to `AGENTS.md` › *Workspace rules*. A temporary agreement goes to `DECISIONS.md` with an `Until:` (a PR merging, a ticket closing, a question answered, a date). Delete the `DECISIONS.md` entries whose condition has been met.
 
@@ -45,7 +46,11 @@ It fails on any of these:
 - a commit hash in In flight
 - a `done` entry in `PROGRESS.md`
 - a `DECISIONS.md` entry with no `Until:`, or whose `Until:` PR is merged or closed, or whose date has passed
-- anything that looks like a secret value or an email address
+- anything that looks like a secret value or an email address, in the memory or in a task file
+- a `Doc:` line in `PROGRESS.md` that names a task file that doesn't exist, or one whose `Status:` is `done`
+- in a task file: a task `done` with no *Evidence* line naming it, or `Status: done` with a task not done
+- an In flight `N/M passed` cell that its linked task file's *Evidence* contradicts
+- an `AGENTS.md` longer than Codex reads (`project_doc_max_bytes` in `.codex/config.toml`); a warning past 85%
 - the memory over its word budget (`WORD_BUDGET` in `.orchestrator/orchestrator.conf`): trim `PROGRESS.md` first, then `DECISIONS.md`
 
 Fix every failure and rerun until it passes. Don't commit around it.
@@ -55,7 +60,7 @@ Fix every failure and rerun until it passes. Don't commit around it.
 Skip this step when `.orchestrator/orchestrator.conf` has `ROOT_GIT="no"`: the memory is not versioned.
 
 ```bash
-git add memory && git commit -m "<sync after <task>, in the root's commit convention>"
+git add memory odd && git commit -m "<sync after <task>, in the root's commit convention>"
 ```
 
 Commit at the root only, following *Workspace rules* (attribution included). Push only if the user set up a remote for the root and asked for it. Never touch anything inside the app repos.
