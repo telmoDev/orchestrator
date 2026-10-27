@@ -11,6 +11,8 @@ into the new version's section.
 
 ## Unreleased
 
+## v0.7.0 — 2026-10-27
+
 - The flow is **Organic Driven Development (ODD)**: the process grows only as far as the request needs.
   "Outcome-driven" stays as the criteria layer inside it, without the acronym.
   - *Ask or change*: an explanation, investigation or proposal edits nothing and creates no task file or memory entry.
