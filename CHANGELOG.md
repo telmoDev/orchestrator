@@ -11,6 +11,12 @@ into the new version's section.
 
 ## Unreleased
 
+- `harness.py doctor` and [docs/harnesses.md](docs/harnesses.md): the harness capability contract (meta-harness X2).
+  Each runtime declares what it can really do for hat (`health_check`, `collect_events`, `usage`, `execute`,
+  `status`, `cancel`) as `verified`, `unverified` or `unsupported`; Claude Code has events, usage and its health
+  check verified, Codex nothing yet. `doctor` says whether each runtime is installed and wired in the workspace
+  (naming any missing hook). No network, no model calls, never starts a session; nothing in the flow uses it yet.
+
 - Phase 1 review ([docs/meta-harness/phase-1-review.md](docs/meta-harness/phase-1-review.md)): hook latency, concurrency,
   privacy and the update path measured on copies of real workspaces. Two fixes: `errors.log` names an unknown
   payload key only when it looks like an identifier (free text in a key is never logged), and the session handoff
